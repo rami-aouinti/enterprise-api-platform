@@ -47,8 +47,8 @@ locaux proviennent du fichier `.env` ignoré par Git.
 Provisionner le client machine confidentiel lorsque Keycloak est prêt :
 
 ~~~bash
-curl --fail http://localhost:8081/health/ready
-sh scripts/keycloak-provision.sh
+curl --fail http://localhost:9000/health/ready
+bash scripts/keycloak-provision.sh
 ~~~
 
 Voir [Flux d'identité Keycloak](../security/keycloak-identity.md) pour le flux
@@ -60,7 +60,7 @@ procédure de rotation des clés.
 ~~~bash
 curl -i http://localhost:8000/health
 curl -i http://localhost:8000/health/ready
-curl --fail http://localhost:8081/health/ready
+curl --fail http://localhost:9000/health/ready
 bash scripts/smoke-test.sh
 sh scripts/keycloak-token-smoke-test.sh
 docker compose ps
@@ -68,7 +68,7 @@ docker compose ps
 
 - `/health` confirme que l'application HTTP Symfony répond.
 - `/health/ready` exécute une requête légère sur la base et renvoie HTTP 503 si PostgreSQL est indisponible.
-- L'endpoint `/health/ready` de Keycloak confirme que le fournisseur d'identité est prêt.
+- L'endpoint de gestion Keycloak sur le port `9000` confirme que le fournisseur d'identité est prêt. Le port `8081` sert aux endpoints HTTP du realm (OIDC, autorisation et jetons).
 - Le test rapide de jeton vérifie la découverte OIDC et obtient un jeton machine.
 
 ## Commandes backend

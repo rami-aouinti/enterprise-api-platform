@@ -48,7 +48,7 @@ et attribuer à son compte de service le rôle `api.read`, selon le principe du
 moindre privilège :
 
 ~~~bash
-sh scripts/keycloak-provision.sh
+bash scripts/keycloak-provision.sh
 ~~~
 
 Le secret du client confidentiel est fourni au conteneur à l'exécution. Il
@@ -198,5 +198,5 @@ Keycloak locaux. Elle ne supprime pas le volume PostgreSQL.
 
 - Consulter les journaux : `docker compose logs -f keycloak`.
 - Vérifier la disponibilité : `curl -i http://localhost:8081/health/ready`.
-- Si un secret change dans `.env`, relancer `sh scripts/keycloak-provision.sh`.
+- Si un secret change dans `.env`, relancer `bash scripts/keycloak-provision.sh`.
 - Si le navigateur reçoit `invalid_redirect_uri`, comparer le callback avec l'URI exacte enregistrée sur `enterprise-portal`.
