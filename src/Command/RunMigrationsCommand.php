@@ -14,9 +14,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
 #[AsCommand(name: 'app:database:migrate', description: 'Apply pending customer service SQL migrations.')]
-final readonly class RunMigrationsCommand extends Command
+final class RunMigrationsCommand extends Command
 {
-    public function __construct(private Connection $connection)
+    public function __construct(private readonly Connection $connection)
     {
         parent::__construct();
     }

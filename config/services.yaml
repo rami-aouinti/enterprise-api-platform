@@ -12,3 +12,4 @@ services:
 
     App\Customer\Application\CustomerRepository:
         alias: App\Customer\Infrastructure\DoctrineCustomerRepository
+        public: true
