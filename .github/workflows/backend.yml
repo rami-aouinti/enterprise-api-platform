@@ -13,6 +13,10 @@ on:
       - 'phpunit.xml.dist'
       - 'phpstan.neon'
       - '.php-cs-fixer.dist.php'
+      - 'scripts/**'
+      - 'infrastructure/**'
+      - 'compose.yaml'
+      - '.env.example'
       - '.github/workflows/backend.yml'
   pull_request:
     branches: [main]
@@ -26,6 +30,10 @@ on:
       - 'phpunit.xml.dist'
       - 'phpstan.neon'
       - '.php-cs-fixer.dist.php'
+      - 'scripts/**'
+      - 'infrastructure/**'
+      - 'compose.yaml'
+      - '.env.example'
       - '.github/workflows/backend.yml'
 
 permissions:
@@ -87,3 +95,86 @@ jobs:
           DB_USER: enterprise_api
           DB_PASSWORD: test-password
         run: composer test
+
+  security-integration:
+    name: Keycloak / Kong / Symfony JWT integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare isolated Docker Compose environment
+        run: |
+          cat > .env <<'ENV'
+          APP_ENV=dev
+          APP_DEBUG=0
+          APP_SECRET=ci-local-secret-not-for-production
+          DEFAULT_URI=http://localhost:8000
+          POSTGRES_DB=enterprise_api
+          POSTGRES_USER=enterprise_api
+          POSTGRES_PASSWORD=ci-postgres-password
+          KEYCLOAK_ADMIN_USERNAME=admin
+          KEYCLOAK_ADMIN_PASSWORD=ci-keycloak-admin-password
+          KEYCLOAK_MACHINE_CLIENT_SECRET=ci-machine-client-secret
+          KEYCLOAK_PUBLIC_URL=http://localhost:8081
+          KEYCLOAK_ISSUER=http://localhost:8081/realms/enterprise-platform
+          KEYCLOAK_DISCOVERY_BASE_URI=http://keycloak:8080/realms/enterprise-platform/
+          KEYCLOAK_AUDIENCE=enterprise-api
+          ENV
+
+      - name: Start PostgreSQL, Keycloak, Symfony API and Kong
+        run: docker compose up -d --build
+
+      - name: Wait for platform services
+        run: |
+          wait_for_url() {
+            url="$1"
+            label="$2"
+            for attempt in $(seq 1 60); do
+              if curl --fail --silent "$url" >/dev/null; then
+                echo "$label is ready"
+                return 0
+              fi
+              sleep 5
+            done
+            echo "$label did not become ready: $url" >&2
+            docker compose ps
+            docker compose logs --no-color "$label" || true
+            return 1
+          }
+
+          wait_for_url http://localhost:9000/health/ready keycloak
+          wait_for_url http://localhost:8000/health/ready api
+          wait_for_url http://localhost:8100/status kong
+
+      - name: Create isolated customer table for API security checks
+        run: |
+          docker compose exec -T database psql \
+            -v ON_ERROR_STOP=1 \
+            -U enterprise_api -d enterprise_api <<'SQL'
+          CREATE TABLE customers (
+              id UUID PRIMARY KEY,
+              first_name VARCHAR(100) NOT NULL,
+              last_name VARCHAR(100) NOT NULL,
+              email VARCHAR(255) NOT NULL UNIQUE,
+              phone VARCHAR(50),
+              status VARCHAR(30) NOT NULL DEFAULT 'active',
+              created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+          );
+          SQL
+
+      - name: Provision Keycloak machine clients and OAuth2 scopes
+        run: bash scripts/keycloak-provision.sh
+
+      - name: Run real JWT authentication and scope authorization tests
+        run: bash scripts/keycloak-scope-smoke-test.sh
+
+      - name: Collect Docker logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Stop integration environment
+        if: always()
+        run: docker compose down -v
