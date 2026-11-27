@@ -54,7 +54,7 @@ fi
 ensure_optional_scope() {
   SCOPE_NAME="$1"
   SCOPE_ID=$("$KC" get client-scopes -r "$REALM" -q "name=$SCOPE_NAME" \
-    | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' \
+    | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
     | head -n 1)
 
   if [ -z "$SCOPE_ID" ]; then
@@ -64,7 +64,7 @@ ensure_optional_scope() {
       -s 'attributes."include.in.token.scope"=true' \
       -s 'attributes."display.on.consent.screen"=false'
     SCOPE_ID=$("$KC" get client-scopes -r "$REALM" -q "name=$SCOPE_NAME" \
-      | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' \
+      | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
       | head -n 1)
   fi
   test -n "$SCOPE_ID"
