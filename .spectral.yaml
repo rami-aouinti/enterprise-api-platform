@@ -1,0 +1,82 @@
+extends:
+  - spectral:oas
+
+rules:
+  info-contact: error
+  contact-properties: error
+  info-description: error
+  operation-description: error
+  operation-operationId: error
+  operation-operationId-unique: error
+  operation-tags: error
+  operation-tag-defined: error
+  operation-success-response: error
+  path-keys-no-trailing-slash: error
+  path-params: error
+  oas3-api-servers: error
+  oas3-operation-security-defined: error
+
+  api-operation-security:
+    description: Every API operation must declare its OAuth2 security requirement.
+    message: Operation must declare an OAuth2 security requirement.
+    severity: error
+    given: "$.paths[*][get,post,put,patch,delete,options,head,trace]"
+    then:
+      field: security
+      function: schema
+      functionOptions:
+        dialect: draft7
+        schema:
+          type: array
+          minItems: 1
+
+  api-unauthorized-response:
+    description: Every protected operation must document HTTP 401.
+    message: Protected operation must document a 401 response.
+    severity: error
+    given: "$.paths[*][get,post,put,patch,delete,options,head,trace]"
+    then:
+      field: responses.401
+      function: truthy
+
+  api-forbidden-response:
+    description: Every protected operation must document HTTP 403.
+    message: Protected operation must document a 403 response.
+    severity: error
+    given: "$.paths[*][get,post,put,patch,delete,options,head,trace]"
+    then:
+      field: responses.403
+      function: truthy
+
+  api-operation-id-camel-case:
+    description: operationId values must use lower camelCase.
+    message: operationId must use lower camelCase.
+    severity: error
+    given: "$.paths[*][get,post,put,patch,delete,options,head,trace]"
+    then:
+      field: operationId
+      function: pattern
+      functionOptions:
+        match: '^[a-z][A-Za-z0-9]*$'
+
+  api-path-kebab-case:
+    description: Static path segments must use lowercase kebab-case.
+    message: Path must use lowercase kebab-case segments and camelCase path parameters.
+    severity: error
+    given: $.paths
+    then:
+      field: '@key'
+      function: pattern
+      functionOptions:
+        match: '^/(?:[a-z0-9]+(?:-[a-z0-9]+)*|\{[A-Za-z][A-Za-z0-9]*\})(?:/(?:[a-z0-9]+(?:-[a-z0-9]+)*|\{[A-Za-z][A-Za-z0-9]*\}))*$'
+
+  api-info-version-semver:
+    description: Contract versions must use semantic versioning.
+    message: info.version must use semantic versioning (for example 1.2.0).
+    severity: error
+    given: $.info.version
+    then:
+      function: pattern
+      functionOptions:
+        match: '^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?
+

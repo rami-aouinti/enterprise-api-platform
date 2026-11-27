@@ -7,6 +7,9 @@ on:
       - 'src/**'
       - 'services/**'
       - 'docs/api/**'
+      - 'docs/adr/**'
+      - '.spectral.yaml'
+      - '.oasdiff.yaml'
       - 'docs/development/**'
       - 'config/**'
       - 'public/**'
@@ -27,6 +30,9 @@ on:
       - 'src/**'
       - 'services/**'
       - 'docs/api/**'
+      - 'docs/adr/**'
+      - '.spectral.yaml'
+      - '.oasdiff.yaml'
       - 'docs/development/**'
       - 'config/**'
       - 'public/**'
@@ -101,6 +107,37 @@ jobs:
           DB_USER: enterprise_api
           DB_PASSWORD: test-password
         run: composer test
+
+  api-governance:
+    name: Spectral / oasdiff OpenAPI governance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout with base history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Spectral
+        run: npm install --global @stoplight/spectral-cli@6.17.1
+
+      - name: Install pinned oasdiff
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/oasdiff.tar.gz" https://github.com/oasdiff/oasdiff/releases/download/v1.41.0/oasdiff_1.41.0_linux_amd64.tar.gz
+          echo "96365453163118e6503eb71742643d9ee67f91aedbaadd1a1ce9c6213e3b71c7  $RUNNER_TEMP/oasdiff.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/oasdiff.tar.gz" -C "$RUNNER_TEMP" oasdiff
+          sudo install -m 0755 "$RUNNER_TEMP/oasdiff" /usr/local/bin/oasdiff
+          oasdiff --version
+
+      - name: Lint changed contracts and check backward compatibility
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: bash scripts/check-openapi-contracts.sh "$BASE_REF"
 
   security-integration:
     name: Keycloak / Kong / Symfony JWT integration

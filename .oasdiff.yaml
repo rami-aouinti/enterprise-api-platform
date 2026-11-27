@@ -1,0 +1,2 @@
+fail-on: MISSING-VERSION-BUMP
+err-ignore: ./docs/api/compatibility-exceptions.txt

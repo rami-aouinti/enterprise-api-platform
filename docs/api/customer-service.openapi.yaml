@@ -3,6 +3,10 @@ info:
   title: Enterprise API Platform — Service Client
   version: 1.0.0
   description: API REST versionnée pour la gestion du cycle de vie des clients.
+  contact:
+    name: Enterprise API Platform Team
+    url: https://github.com/rami-aouinti/enterprise-api-platform/issues
+    email: api-platform@example.org
 servers:
   - url: /api/v1
     description: Version actuelle de l'API
@@ -16,6 +20,8 @@ paths:
       operationId: listCustomers
       summary: Lister les clients
       description: Retourne une collection de clients paginée.
+      security:
+        - oauth2: [customers:read]
       parameters:
         - name: page
           in: query
@@ -33,6 +39,8 @@ paths:
             maximum: 100
             default: 20
       responses:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '200':
           description: Collection de clients.
           content:
@@ -45,6 +53,9 @@ paths:
       tags: [Customers]
       operationId: createCustomer
       summary: Créer un client
+      description: Crée un client et retourne la ressource créée.
+      security:
+        - oauth2: [customers:write]
       requestBody:
         required: true
         content:
@@ -58,6 +69,8 @@ paths:
               phone: '+44 20 7946 0958'
               status: active
       responses:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '201':
           description: Client créé.
           headers:
@@ -90,7 +103,12 @@ paths:
       tags: [Customers]
       operationId: getCustomer
       summary: Récupérer un client
+      description: Retourne les détails du client identifié par son UUID.
+      security:
+        - oauth2: [customers:read]
       responses:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '200':
           description: Ressource client.
           content:
@@ -103,6 +121,9 @@ paths:
       tags: [Customers]
       operationId: updateCustomer
       summary: Modifier partiellement un client
+      description: Met à jour uniquement les champs fournis pour le client.
+      security:
+        - oauth2: [customers:write]
       requestBody:
         required: true
         content:
@@ -113,6 +134,8 @@ paths:
               phone: '+49 30 123456'
               status: inactive
       responses:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '200':
           description: Client mis à jour.
           content:
@@ -130,6 +153,15 @@ paths:
         '422':
           $ref: '#/components/responses/Problem'
 components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: http://localhost:8081/realms/enterprise-platform/protocol/openid-connect/token
+          scopes:
+            customers:read: Lire les ressources client.
+            customers:write: Créer et modifier les ressources client.
   schemas:
     Customer:
       type: object
@@ -251,6 +283,10 @@ components:
           additionalProperties:
             type: string
   responses:
+    Unauthorized:
+      description: Jeton Bearer absent, expiré ou invalide.
+    Forbidden:
+      description: Le jeton ne possède pas le scope OAuth2 requis.
     Problem:
       description: Réponse Problem Details conforme à la RFC 9457.
       content:

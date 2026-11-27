@@ -3,6 +3,10 @@ info:
   title: Enterprise API Platform — API Registry
   version: 1.0.0
   description: Catalogue centralisé des API, de leurs propriétaires, états de cycle de vie et contrats OpenAPI versionnés.
+  contact:
+    name: Enterprise API Platform Team
+    url: https://github.com/rami-aouinti/enterprise-api-platform/issues
+    email: api-platform@example.org
 servers:
   - url: /api/v1
 tags:
@@ -14,7 +18,8 @@ paths:
       tags: [API Registry]
       operationId: listRegisteredApis
       summary: Rechercher les API enregistrées
-      security: [{ bearerAuth: [apis:read] }]
+      description: Recherche le catalogue avec filtres et pagination stable.
+      security: [{ oauth2: [apis:read] }]
       parameters:
         - { name: q, in: query, schema: { type: string, maxLength: 200 } }
         - { name: state, in: query, schema: { type: string, enum: [draft, published, deprecated] } }
@@ -30,7 +35,8 @@ paths:
       tags: [API Registry]
       operationId: registerApi
       summary: Enregistrer une API
-      security: [{ bearerAuth: [apis:write] }]
+      description: Enregistre les métadonnées et le propriétaire d'une API.
+      security: [{ oauth2: [apis:write] }]
       requestBody:
         required: true
         content:
@@ -48,20 +54,26 @@ paths:
       tags: [API Registry]
       operationId: getRegisteredApi
       summary: Consulter une API et ses versions
-      security: [{ bearerAuth: [apis:read] }]
+      description: Retourne les métadonnées et les versions OpenAPI enregistrées.
+      security: [{ oauth2: [apis:read] }]
       responses:
         '200': { description: Métadonnées et versions, content: { application/json: { schema: { $ref: '#/components/schemas/ApiRegistryEntry' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/Problem' }
     patch:
       tags: [API Registry]
       operationId: updateRegisteredApi
       summary: Modifier les métadonnées ou l'état
-      security: [{ bearerAuth: [apis:write] }]
+      description: Modifie les métadonnées ou l'état de cycle de vie d'une API.
+      security: [{ oauth2: [apis:write] }]
       requestBody:
         required: true
         content:
           application/json: { schema: { $ref: '#/components/schemas/ApiRegistryPatch' } }
       responses:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '200': { description: Métadonnées mises à jour, content: { application/json: { schema: { $ref: '#/components/schemas/ApiRegistryEntry' } } } }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
@@ -70,7 +82,8 @@ paths:
       tags: [API Registry]
       operationId: registerApiVersion
       summary: Enregistrer un contrat OpenAPI versionné
-      security: [{ bearerAuth: [apis:write] }]
+      description: Enregistre un document OpenAPI immuable pour une version sémantique.
+      security: [{ oauth2: [apis:write] }]
       parameters:
         - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
       requestBody:
@@ -85,6 +98,8 @@ paths:
                 document: { $ref: '#/components/schemas/OpenApiDocument' }
       responses:
         '201': { description: Version enregistrée, content: { application/json: { schema: { $ref: '#/components/schemas/ApiVersion' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
@@ -93,16 +108,26 @@ paths:
       tags: [API Registry]
       operationId: getApiVersion
       summary: Récupérer le document OpenAPI d'une version
-      security: [{ bearerAuth: [apis:read] }]
+      description: Retourne le document OpenAPI complet de la version demandée.
+      security: [{ oauth2: [apis:read] }]
       parameters:
         - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
         - { name: version, in: path, required: true, schema: { type: string } }
       responses:
         '200': { description: Contrat OpenAPI demandé, content: { application/json: { schema: { $ref: '#/components/schemas/ApiVersion' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/Problem' }
 components:
   securitySchemes:
-    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: http://localhost:8081/realms/enterprise-platform/protocol/openid-connect/token
+          scopes:
+            apis:read: Lire le catalogue et les contrats OpenAPI.
+            apis:write: Enregistrer et modifier les API et leurs versions.
   schemas:
     ApiRegistryEntry:
       type: object
@@ -184,6 +209,6 @@ components:
         instance: { type: string }
         errors: { type: object, additionalProperties: { type: string } }
   responses:
+    Unauthorized: { description: Jeton Bearer absent, expiré ou invalide }
+    Forbidden: { description: Le jeton ne possède pas le scope OAuth2 requis }
     Problem: { description: Réponse RFC 9457, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
-    Unauthorized: { description: Jeton absent ou invalide }
-    Forbidden: { description: Scope OAuth2 insuffisant }
