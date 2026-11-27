@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-set -Eeuo pipefail
+#!/bin/sh
+set -eu
 
 API_BASE_URL="${API_BASE_URL:-http://127.0.0.1:8000}"
 
@@ -13,7 +13,7 @@ echo
 
 echo "Checking unknown routes return 404..."
 status="$(curl --silent --output /dev/null --write-out '%{http_code}' "${API_BASE_URL}/not-found")"
-if [[ "${status}" != "404" ]]; then
+if [ "${status}" != "404" ]; then
     echo "Expected HTTP 404, received HTTP ${status}" >&2
     exit 1
 fi
