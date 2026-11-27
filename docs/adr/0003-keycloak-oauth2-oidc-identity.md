@@ -1,35 +1,41 @@
-# ADR-0003: Keycloak for OAuth 2.0 and OpenID Connect
+# ADR-0003 : Keycloak pour OAuth 2.0 et OpenID Connect
 
-- **Status:** Accepted
-- **Date:** 2026-11-27
-- **Related issue:** [#18](https://github.com/rami-aouinti/enterprise-api-platform/issues/18)
+- **Statut :** Accepté
+- **Date :** 2026-11-27
+- **Ticket associé :** [#18](https://github.com/rami-aouinti/enterprise-api-platform/issues/18)
 
-## Context
-The platform needs a standards-based identity provider for human users, the developer portal, and machine-to-machine API consumers. Authentication must be separated from application-specific authorization.
+## Contexte
 
-## Decision
-Use Keycloak as the self-hosted identity provider and authorization server for the local reference environment. Use OpenID Connect Authorization Code with PKCE (S256) for browser-based public clients and OAuth 2.0 Client Credentials for confidential machine clients.
+La plateforme a besoin d'un fournisseur d'identité standard pour les utilisateurs humains, le portail développeur et les consommateurs machine-à-machine. L'authentification doit être séparée de l'autorisation propre à l'application.
 
-The local `enterprise-platform` realm is imported from version-controlled configuration. It provisions a public `enterprise-portal` client, an `enterprise-api` resource-server audience, a confidential `enterprise-api-machine` client, synthetic test user, realm roles, and an API audience mapper. The machine-client secret is injected from the ignored local environment file and applied after realm import; it is not part of the realm export.
+## Décision
 
-Define separate clients for the portal and API consumers. Use narrowly scoped roles/scopes and audiences. Services independently validate access-token signature, issuer, audience, expiry, not-before when present, and permitted algorithms. Services map validated claims to application permissions and enforce resource-level access.
+Utiliser Keycloak comme fournisseur d'identité auto-hébergé et serveur d'autorisation pour l'environnement local de référence. Utiliser OpenID Connect Authorization Code avec PKCE (S256) pour les clients publics exécutés dans le navigateur, et OAuth 2.0 Client Credentials pour les clients machine confidentiels.
 
-Do not use the password grant or implicit flow. Do not treat ID tokens as API access tokens. Confidential-client secrets are injected at runtime and never committed or exposed in frontend assets.
+Le realm local `enterprise-platform` est importé depuis une configuration versionnée. Il crée un client public `enterprise-portal`, une audience de serveur de ressources `enterprise-api`, un client machine confidentiel `enterprise-api-machine`, un utilisateur de test synthétique, des rôles de realm et un mapper d'audience API. Le secret du client machine est injecté depuis le fichier d'environnement local ignoré par Git et appliqué après l'import du realm ; il ne fait pas partie de l'export du realm.
 
-## Alternatives considered
-1. Application-managed users and JWTs: less infrastructure, but duplicates identity lifecycle and token security.
-2. External managed identity provider: realistic for production, but adds external account dependencies and may incur cost.
-3. Other self-hosted identity providers: viable; Keycloak offers a broad OAuth2/OIDC feature set and practical local environment.
+Définir des clients distincts pour le portail et les consommateurs API. Utiliser des rôles/scopes et audiences limités au strict nécessaire. Les services valident indépendamment la signature du jeton d'accès, l'issuer, l'audience, l'expiration, la date de début de validité si présente et les algorithmes autorisés. Ils associent ensuite les claims validés aux permissions applicatives et appliquent l'autorisation au niveau des ressources.
 
-## Consequences
-**Positive:** standards-based login and machine identity; centralized user/client lifecycle and signing-key management; reproducible local identity configuration and token-flow demonstrations.
+Ne pas utiliser le grant password ni le flux implicit. Ne pas considérer les ID tokens comme des jetons d'accès API. Les secrets des clients confidentiels sont injectés à l'exécution ; ils ne sont jamais committés ni exposés dans les ressources frontend.
 
-**Negative:** realm/client configuration adds complexity; callback URLs and key rotation require care; gateway and service validation must remain consistent.
+## Alternatives étudiées
 
-## Security and operations
-Use Authorization Code with PKCE for browser-based public clients. Keep access tokens short-lived and configure refresh-token behavior deliberately. Validate issuer, audience, signature, expiry, not-before when present, and algorithm allow-lists. Never log tokens. Plan for signing-key rotation and identity-provider unavailability.
+1. Utilisateurs et JWT gérés par l'application : moins d'infrastructure, mais duplique le cycle de vie des identités et la sécurité des jetons.
+2. Fournisseur d'identité externe géré : réaliste dans certaines entreprises, mais ajoute des dépendances à un compte externe et peut engendrer des coûts.
+3. Autres fournisseurs d'identité auto-hébergés : options viables ; Keycloak offre un ensemble étendu de fonctions OAuth2/OIDC et un environnement local pratique.
 
-The local realm uses five-minute access tokens, refresh-token rotation for interactive sessions, and a JWKS endpoint for public-key distribution. The local development realm uses HTTP and synthetic credentials only; production deployments require TLS, managed secrets, hardened Keycloak configuration, and explicit redirect origins.
+## Conséquences
 
-## Review criteria
-Revisit the client and flow model when portal, external partner, and service-to-service use cases are implemented and their trust boundaries are testable.
+**Avantages :** identité standard pour les utilisateurs et les machines ; gestion centralisée des utilisateurs/clients et des clés de signature ; configuration locale reproductible et démonstration des flux de jetons.
+
+**Inconvénients :** la configuration des realms/clients ajoute de la complexité ; les URL de callback et la rotation des clés nécessitent une attention opérationnelle ; la validation doit rester cohérente entre gateway et services.
+
+## Sécurité et exploitation
+
+Utiliser Authorization Code avec PKCE pour les clients navigateur. Garder les jetons d'accès de courte durée et configurer explicitement le comportement des refresh tokens. Valider l'issuer, l'audience, la signature, l'expiration, la date de début de validité si présente et la liste des algorithmes autorisés. Ne jamais journaliser les jetons. Prévoir la rotation des clés de signature et l'indisponibilité du fournisseur d'identité.
+
+Le realm local utilise des jetons d'accès de cinq minutes, la rotation des refresh tokens pour les sessions interactives et un endpoint JWKS pour distribuer les clés publiques. Le realm de développement local utilise HTTP et des identifiants synthétiques uniquement ; les déploiements de production exigent TLS, une gestion sécurisée des secrets, une configuration Keycloak renforcée et des origines de redirection explicites.
+
+## Critères de révision
+
+Revoir le modèle de clients et de flux lorsque le portail, les partenaires externes et les cas service-à-service seront implémentés et que leurs frontières de confiance pourront être testées.

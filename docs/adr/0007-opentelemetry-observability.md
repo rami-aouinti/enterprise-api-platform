@@ -1,31 +1,37 @@
-# ADR-0007: OpenTelemetry for Platform Observability
+# ADR-0007 : OpenTelemetry pour l'observabilité de la plateforme
 
-- **Status:** Proposed
-- **Date:** 2026-11-27
-- **Related issue:** [#12](https://github.com/rami-aouinti/enterprise-api-platform/issues/12)
+- **Statut :** Proposé
+- **Date :** 2026-11-27
+- **Ticket associé :** [#12](https://github.com/rami-aouinti/enterprise-api-platform/issues/12)
 
-## Context
-Requests and messages cross the gateway, domain APIs, brokers, and integration runtime. Separate logs without shared context make it difficult to diagnose latency, failures, retries, and cross-service behavior.
+## Contexte
 
-## Decision
-Use OpenTelemetry APIs/SDKs and semantic conventions as the instrumentation baseline. Propagate trace context across HTTP and messaging boundaries. Instrument inbound/outbound requests, database operations where supported, and message production/consumption.
+Les requêtes et messages traversent la gateway, les API métier, les brokers et le moteur d'intégration. Des journaux séparés sans contexte commun compliquent le diagnostic des latences, erreurs, retries et comportements interservices.
 
-For the initial local stack, use Prometheus for metrics, Grafana for dashboards, Loki for logs, and Jaeger for trace exploration. Keep application instrumentation vendor-neutral so exporters and backends can change independently.
+## Décision
 
-Define useful service-level signals: request rate, error rate, latency distributions, saturation/resource use, queue depth/consumer lag, retry and dead-letter counts, and integration execution outcomes.
+Utiliser les API/SDK OpenTelemetry et les conventions sémantiques comme socle d'instrumentation. Propager le contexte de trace à travers HTTP et la messagerie. Instrumenter les requêtes entrantes/sortantes, les opérations de base de données lorsque cela est pris en charge, ainsi que la production et la consommation de messages.
 
-## Alternatives considered
-1. Vendor-specific instrumentation: convenient in some environments, but couples application code to a backend.
-2. Logs only: insufficient for latency breakdown and distributed request causality.
-3. Metrics only: useful for aggregate health but weak for debugging individual cross-service flows.
+Pour le premier environnement local, utiliser Prometheus pour les métriques, Grafana pour les tableaux de bord, Loki pour les journaux et Jaeger pour l'exploration des traces. Garder l'instrumentation applicative indépendante des fournisseurs afin que les exporters et backends puissent évoluer séparément.
 
-## Consequences
-**Positive:** correlated traces across synchronous and asynchronous boundaries; portable instrumentation; better operational evidence for performance and reliability decisions.
+Définir des signaux utiles au niveau des services : taux de requêtes, taux d'erreurs, distributions de latence, saturation/ressources, profondeur des files/retard des consommateurs, nombre de retries et de messages en DLQ, résultats des exécutions d'intégration.
 
-**Negative:** instrumentation and collector configuration add complexity; high-cardinality attributes and sensitive data create cost/privacy risks; sampling and retention need deliberate defaults.
+## Alternatives étudiées
 
-## Security and operations
-Never record bearer tokens, passwords, API keys, or unrestricted personal data in telemetry. Redact sensitive attributes, control label cardinality, configure sampling and retention, and restrict access to logs/traces. Monitor collector health and dropped telemetry.
+1. Instrumentation spécifique à un fournisseur : pratique dans certains environnements, mais couple le code applicatif au backend.
+2. Journaux uniquement : insuffisants pour détailler les latences et la causalité des requêtes distribuées.
+3. Métriques uniquement : utiles pour la santé globale, mais peu adaptées au débogage de flux interservices individuels.
 
-## Review criteria
-Revisit exporters and backends after the first instrumented end-to-end flow and validate that the stack provides actionable signals without excessive local resource use.
+## Conséquences
+
+**Avantages :** traces corrélées entre frontières synchrones et asynchrones ; instrumentation portable ; meilleures preuves opérationnelles pour les décisions de performance et de fiabilité.
+
+**Inconvénients :** l'instrumentation et la configuration du collector ajoutent de la complexité ; les attributs à forte cardinalité et les données sensibles créent des risques de coût et de confidentialité ; échantillonnage et rétention nécessitent des valeurs par défaut réfléchies.
+
+## Sécurité et exploitation
+
+Ne jamais enregistrer de jetons Bearer, mots de passe, clés API ou données personnelles sans restriction dans la télémétrie. Masquer les attributs sensibles, contrôler la cardinalité des labels, configurer l'échantillonnage et la rétention et limiter l'accès aux journaux/traces. Surveiller la santé du collector et les pertes de télémétrie.
+
+## Critères de révision
+
+Revoir les exporters et backends après le premier flux instrumenté de bout en bout et vérifier que la stack fournit des signaux exploitables sans consommer trop de ressources locales.

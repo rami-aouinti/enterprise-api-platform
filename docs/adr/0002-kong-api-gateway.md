@@ -1,31 +1,37 @@
-# ADR-0002: Kong as the API Gateway
+# ADR-0002 : Kong comme API Gateway
 
-- **Status:** Proposed
-- **Date:** 2026-11-27
-- **Related issue:** [#12](https://github.com/rami-aouinti/enterprise-api-platform/issues/12)
+- **Statut :** Proposé
+- **Date :** 2026-11-27
+- **Ticket associé :** [#12](https://github.com/rami-aouinti/enterprise-api-platform/issues/12)
 
-## Context
-Published APIs need a consistent entry point for routing, deployment-level TLS termination, request limits, and edge security controls. Direct public access to every service would duplicate policy and increase the exposed attack surface.
+## Contexte
 
-## Decision
-Use Kong Gateway as the north-south API entry point. Keep gateway configuration declarative and version-controlled. Kong handles routing, edge request limits, configured authentication integration, and gateway telemetry.
+Les API publiées ont besoin d'un point d'entrée cohérent pour le routage, la terminaison TLS au niveau du déploiement, les limites de requêtes et les contrôles de sécurité en périphérie. Un accès public direct à chaque service dupliquerait les règles et augmenterait la surface d'attaque exposée.
 
-Domain services remain responsible for business validation, resource-level authorization, and ownership checks. Passing the gateway does not make a request trusted by a service.
+## Décision
 
-The initial local setup uses the open-source distribution and only capabilities verified to exist in that edition. Any OIDC integration requiring a paid plugin or external component must be evaluated before adoption.
+Utiliser Kong Gateway comme point d'entrée nord-sud des API. Garder la configuration de la gateway déclarative et versionnée dans Git. Kong gère le routage, les limites de requêtes en périphérie, l'intégration d'authentification configurée et la télémétrie de la gateway.
 
-## Alternatives considered
-1. No gateway: simpler, but edge policies become inconsistent and service exposure is harder to manage.
-2. Custom Symfony gateway: flexible, but duplicates mature gateway functionality and creates avoidable maintenance.
-3. Traefik or NGINX: viable routing options, but Kong's API-oriented plugin and declarative configuration model better supports the learning goals.
+Les services métier restent responsables de la validation métier, de l'autorisation au niveau des ressources et des contrôles de propriété. Le passage par la gateway ne rend pas automatiquement une requête digne de confiance pour un service.
 
-## Consequences
-**Positive:** centralized routing and edge policies; clear separation of edge and domain responsibilities; reviewable configuration as code.
+La configuration locale initiale utilise l'édition open source et uniquement les capacités dont la disponibilité dans cette édition a été vérifiée. Toute intégration OIDC nécessitant un plugin payant ou un composant externe doit être évaluée avant adoption.
 
-**Negative:** another component to operate; plugin availability differs by edition; gateway and service policies can drift unless tested together.
+## Alternatives étudiées
 
-## Security and operations
-Apply conservative body/header limits, timeouts, and rate limits. Never log authorization headers or sensitive payloads. Validate forwarded headers and trusted proxy settings. Keep service endpoints inaccessible from untrusted networks in deployed environments. Maintain health checks and gateway metrics.
+1. Pas de gateway : plus simple, mais les politiques de périphérie deviennent incohérentes et l'exposition des services est plus difficile à maîtriser.
+2. Gateway Symfony personnalisée : flexible, mais reproduit des fonctionnalités déjà matures et crée une maintenance évitable.
+3. Traefik ou NGINX : options de routage viables, mais le modèle de plugins orientés API et la configuration déclarative de Kong correspondent mieux aux objectifs d'apprentissage.
 
-## Review criteria
-Revisit if required OIDC capabilities are unavailable in the selected edition, gateway configuration becomes a bottleneck, or a simpler proxy meets the requirements with less complexity.
+## Conséquences
+
+**Avantages :** routage et politiques de périphérie centralisés ; séparation claire entre responsabilités de la gateway et du domaine ; configuration comme code, vérifiable.
+
+**Inconvénients :** un composant supplémentaire à exploiter ; disponibilité des plugins variable selon l'édition ; risque de divergence entre politiques gateway et services sans tests communs.
+
+## Sécurité et exploitation
+
+Appliquer des limites prudentes aux corps et en-têtes, des timeouts et des limites de débit. Ne jamais journaliser les en-têtes Authorization ni les payloads sensibles. Valider les en-têtes transférés et les paramètres des proxies de confiance. En environnement déployé, empêcher l'accès aux endpoints des services depuis des réseaux non fiables. Maintenir les contrôles de santé et les métriques de la gateway.
+
+## Critères de révision
+
+Revoir cette décision si les capacités OIDC nécessaires ne sont pas disponibles dans l'édition choisie, si la configuration de la gateway devient un goulot d'étranglement ou si un proxy plus simple satisfait les exigences avec moins de complexité.

@@ -1,33 +1,39 @@
-# ADR-0004: Separate Responsibilities for RabbitMQ and Kafka
+# ADR-0004 : Séparer les responsabilités de RabbitMQ et Kafka
 
-- **Status:** Proposed
-- **Date:** 2026-11-27
-- **Related issue:** [#12](https://github.com/rami-aouinti/enterprise-api-platform/issues/12)
+- **Statut :** Proposé
+- **Date :** 2026-11-27
+- **Ticket associé :** [#12](https://github.com/rami-aouinti/enterprise-api-platform/issues/12)
 
-## Context
-The platform needs asynchronous task processing and domain event distribution. Using one broker for every pattern can obscure delivery semantics; operating two brokers without distinct responsibilities adds unjustified complexity.
+## Contexte
 
-## Decision
-Use RabbitMQ for task/work-queue messaging, command-like asynchronous jobs, acknowledgements, bounded retries, and dead-letter queues.
+La plateforme a besoin de traitements asynchrones et de distribution d'événements métier. Utiliser un seul broker pour tous les cas peut masquer les garanties de livraison ; exploiter deux brokers sans responsabilités distinctes ajoute une complexité injustifiée.
 
-Use Kafka only for durable append-oriented domain event streams where multiple independent consumer groups, retention, replay, or stream processing provide a clear benefit.
+## Décision
 
-Do not publish every message to both systems by default. Select the broker based on the communication requirement and document delivery, ordering, retention, and replay semantics.
+Utiliser RabbitMQ pour la messagerie de tâches et de files de travail, les traitements asynchrones de type commande, les accusés de réception, les tentatives limitées et les files de lettres mortes (DLQ).
 
-Assume at-least-once delivery. Consumers must be idempotent. For database state changes that publish events, use a transactional outbox or equivalent reliable publication mechanism. Do not promise exactly-once business processing.
+Utiliser Kafka uniquement pour les flux durables d'événements métier orientés ajout, lorsque plusieurs groupes de consommateurs indépendants, la rétention, le rejeu ou le traitement de flux apportent un bénéfice clair.
 
-## Alternatives considered
-1. RabbitMQ only: simpler operations and sufficient for work queues, but weaker fit for retained/replayable event streams.
-2. Kafka only: powerful event log, but unnecessarily complex for simple task queues.
-3. Both brokers for all messages: rejected because it duplicates operational and consistency costs without a defined need.
+Ne pas publier chaque message dans les deux systèmes par défaut. Choisir le broker selon le besoin de communication et documenter les garanties de livraison, l'ordre, la rétention et les possibilités de rejeu.
 
-## Consequences
-**Positive:** clear separation between task distribution and event-stream use cases; explicit delivery guarantees; replay and independent consumers where justified.
+Partir du principe que la livraison est « au moins une fois ». Les consommateurs doivent être idempotents. Pour les changements d'état en base qui publient des événements, utiliser un transactional outbox ou un mécanisme fiable équivalent. Ne pas promettre un traitement métier « exactement une fois ».
 
-**Negative:** two broker technologies increase local resource use; teams must understand separate routing, retention, retry, and failure semantics.
+## Alternatives étudiées
 
-## Security and operations
-Use authenticated broker connections and least-privilege users, vhosts, and topics. Bound message size and retention. Monitor queue depth, consumer lag, retries, and dead-letter volume. Avoid sensitive personal data in events unless necessary and protected.
+1. RabbitMQ uniquement : exploitation plus simple et suffisant pour les files de travail, mais moins adapté aux flux d'événements conservés et rejouables.
+2. Kafka uniquement : journal d'événements puissant, mais inutilement complexe pour de simples files de tâches.
+3. Les deux brokers pour tous les messages : rejeté, car cela double les coûts opérationnels et de cohérence sans besoin défini.
 
-## Review criteria
-Revisit whether Kafka is warranted after the first real event-stream use case. If no replay or independent-consumer requirement exists, defer Kafka rather than running it for appearance.
+## Conséquences
+
+**Avantages :** séparation claire entre distribution de tâches et flux d'événements ; garanties de livraison explicites ; rejeu et consommateurs indépendants lorsque justifiés.
+
+**Inconvénients :** deux technologies de broker augmentent les ressources locales ; les équipes doivent maîtriser des règles distinctes de routage, rétention, tentatives et gestion des erreurs.
+
+## Sécurité et exploitation
+
+Utiliser des connexions authentifiées et des utilisateurs, vhosts et topics à privilèges limités. Limiter la taille et la durée de conservation des messages. Surveiller la profondeur des files, le retard des consommateurs, les tentatives et le volume des DLQ. Éviter les données personnelles sensibles dans les événements sauf nécessité et protection adaptées.
+
+## Critères de révision
+
+Réévaluer la pertinence de Kafka après le premier véritable cas d'usage de flux d'événements. S'il n'existe aucun besoin de rejeu ou de consommateurs indépendants, différer Kafka plutôt que de l'exploiter uniquement pour l'apparence.

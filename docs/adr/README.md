@@ -1,36 +1,36 @@
-# Architecture Decision Records
+# Décisions d'architecture (ADR)
 
-Architecture Decision Records (ADRs) capture decisions that materially affect architecture, security, operations, and developer workflow. Each record includes context, decision, alternatives, consequences, and security/operational implications.
+Les Architecture Decision Records (ADR) consignent les décisions ayant un impact important sur l'architecture, la sécurité, l'exploitation et le workflow de développement. Chaque fiche présente le contexte, la décision, les alternatives, les conséquences ainsi que les implications de sécurité et d'exploitation.
 
-## Status policy
+## Politique de statut
 
-- **Proposed:** selected direction documented, pending validation during implementation or explicit review.
-- **Accepted:** reviewed and approved for implementation.
-- **Superseded:** replaced by a later ADR; retain the historical record.
-- **Rejected:** considered but not selected.
+- **Proposé :** orientation choisie et documentée, en attente de validation pendant l'implémentation ou d'une revue explicite.
+- **Accepté :** décision examinée et approuvée pour l'implémentation.
+- **Remplacé :** décision remplacée par un ADR ultérieur ; conserver la fiche pour l'historique.
+- **Rejeté :** option étudiée mais non retenue.
 
-Do not silently rewrite an accepted decision. Create a new ADR and link the superseded record when the architecture changes.
+Ne pas réécrire silencieusement une décision acceptée. Créer un nouvel ADR et faire un lien vers la fiche remplacée lorsque l'architecture évolue.
 
-## Decision index
+## Index des décisions
 
-| ADR | Topic | Status |
+| ADR | Sujet | Statut |
 |---|---|---|
-| [ADR-0001](0001-service-boundaries-and-data-ownership.md) | Service boundaries and data ownership | Proposed |
-| [ADR-0002](0002-kong-api-gateway.md) | Kong as API Gateway | Proposed |
-| [ADR-0003](0003-keycloak-oauth2-oidc-identity.md) | Keycloak and OAuth2/OIDC identity | Proposed |
-| [ADR-0004](0004-rabbitmq-kafka-responsibilities.md) | RabbitMQ vs Kafka responsibilities | Proposed |
-| [ADR-0005](0005-api-versioning-and-compatibility.md) | API versioning and compatibility | Proposed |
-| [ADR-0006](0006-ipaas-connector-and-workflow-model.md) | iPaaS connector and workflow model | Proposed |
-| [ADR-0007](0007-opentelemetry-observability.md) | OpenTelemetry observability | Proposed |
+| [ADR-0001](0001-service-boundaries-and-data-ownership.md) | Frontières des services et propriété des données | Accepté |
+| [ADR-0002](0002-kong-api-gateway.md) | Kong comme API Gateway | Proposé |
+| [ADR-0003](0003-keycloak-oauth2-oidc-identity.md) | Keycloak et identité OAuth2/OIDC | Accepté |
+| [ADR-0004](0004-rabbitmq-kafka-responsibilities.md) | Responsabilités de RabbitMQ et Kafka | Proposé |
+| [ADR-0005](0005-api-versioning-and-compatibility.md) | Versionnement et compatibilité des API | Proposé |
+| [ADR-0006](0006-ipaas-connector-and-workflow-model.md) | Modèle de connecteurs et workflows iPaaS | Proposé |
+| [ADR-0007](0007-opentelemetry-observability.md) | Observabilité OpenTelemetry | Proposé |
 
-## Review workflow
+## Processus de revue
 
-1. Review context, alternatives, and consequences with the related implementation issue.
-2. Validate assumptions against the actual selected tool edition and implementation constraints.
-3. Change status to Accepted only after review.
-4. Link implementation issues, pull requests, and follow-up ADRs.
-5. Revisit decisions when measurable evidence or new requirements justify a change.
+1. Examiner le contexte, les alternatives et les conséquences avec le ticket d'implémentation associé.
+2. Valider les hypothèses par rapport à l'édition réelle de l'outil retenu et aux contraintes d'implémentation.
+3. Passer le statut à Accepté uniquement après revue.
+4. Lier les tickets d'implémentation, pull requests et ADR de suivi.
+5. Revoir les décisions lorsque des éléments mesurables ou de nouvelles exigences le justifient.
 
-## Template
+## Modèle
 
-New ADRs should contain: title and number, status, date, related issue, context, decision, alternatives considered, consequences, security and operational implications, and review criteria.
+Tout nouvel ADR doit contenir : titre et numéro, statut, date, ticket associé, contexte, décision, alternatives étudiées, conséquences, implications de sécurité et d'exploitation, critères de révision.

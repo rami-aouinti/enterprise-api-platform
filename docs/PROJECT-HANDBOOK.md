@@ -1,124 +1,124 @@
-# Project Handbook
+# Guide du projet
 
-## 1. Working principles
+## 1. Principes de travail
 
-This repository is an engineering portfolio and hands-on learning environment. Favor explicit trade-offs, incremental delivery, reproducibility, security by default, and evidence through tests and documentation.
+Ce dépôt est un portfolio d'ingénierie et un environnement d'apprentissage pratique. Privilégier les compromis explicités, une livraison progressive, la reproductibilité, la sécurité par défaut et des preuves apportées par les tests et la documentation.
 
-### Definition of Ready
+### Définition de « prêt à démarrer »
 
-A feature can start when:
-- Its problem and user/business outcome are clear.
-- Scope and non-goals are explicit.
-- Dependencies and important design questions are identified.
-- Acceptance criteria are testable.
-- Security, data, and operational implications have been considered.
+Une fonctionnalité peut commencer lorsque :
+- Son problème et le résultat attendu pour l'utilisateur ou l'entreprise sont clairs.
+- Le périmètre et les éléments hors périmètre sont explicites.
+- Les dépendances et les principales questions de conception sont identifiées.
+- Les critères d'acceptation sont vérifiables.
+- Les implications en matière de sécurité, de données et d'exploitation ont été examinées.
 
-### Definition of Done
+### Définition de « terminé »
 
-A feature is done when:
-- Acceptance criteria are met.
-- Automated tests cover normal, invalid, and failure paths as appropriate.
-- Static analysis, formatting, and relevant quality checks pass.
-- API contracts and examples are updated.
-- Security and observability implications are addressed.
-- Documentation and ADRs are updated when decisions change.
-- Docker/local setup remains reproducible.
-- The change is committed directly to main with a focused, traceable commit.
-- Actual validation results and known limitations are documented.
+Une fonctionnalité est terminée lorsque :
+- Les critères d'acceptation sont satisfaits.
+- Les tests automatisés couvrent les scénarios normaux, invalides et en erreur, selon le besoin.
+- L'analyse statique, le formatage et les contrôles qualité pertinents réussissent.
+- Les contrats API et les exemples sont mis à jour.
+- Les implications en matière de sécurité et d'observabilité sont traitées.
+- La documentation et les ADR sont mis à jour lorsque les décisions évoluent.
+- L'installation Docker/locale reste reproductible.
+- Le changement est commité directement sur main avec un commit ciblé et traçable.
+- Les résultats réels de validation et les limites connues sont documentés.
 
-## 2. Git workflow
+## 2. Workflow Git
 
-- Work directly on `main`; this is the agreed workflow for this portfolio repository.
-- Do not create branches or pull requests.
-- Keep each ticket in focused, logically grouped commits.
-- Use Conventional Commit messages and include the issue number, for example: `feat(infra): add Docker Compose runtime (#14)`.
-- Never commit secrets, private keys, production data, or real personal information.
-- Keep `main` in a working state; validate changes before committing whenever the environment permits.
+- Travailler directement sur `main` : c'est le workflow convenu pour ce dépôt de portfolio.
+- Ne créer ni branche ni pull request.
+- Garder chaque ticket dans des commits ciblés et logiquement regroupés.
+- Utiliser Conventional Commits et inclure le numéro du ticket, par exemple : `feat(infra): add Docker Compose runtime (#14)`.
+- Ne jamais commiter de secrets, clés privées, données de production ou informations personnelles réelles.
+- Garder `main` dans un état fonctionnel ; valider les changements avant de les commiter lorsque l'environnement le permet.
 
-## 3. Issue and feature lifecycle
+## 3. Cycle de vie des tickets et fonctionnalités
 
-Each phase is represented by a feature/epic issue. Implementation tasks are separate, small issues with:
-- Context and outcome
-- Scope and non-goals
-- Acceptance criteria
-- Technical notes
-- Test strategy
-- Documentation requirements
-- Dependencies
+Chaque phase est représentée par un ticket GitHub de type fonctionnalité/epic. Les tâches d'implémentation sont des tickets distincts et de taille réduite, qui précisent :
+- Le contexte et le résultat attendu.
+- Le périmètre et les éléments hors périmètre.
+- Les critères d'acceptation.
+- Les notes techniques.
+- La stratégie de test.
+- Les exigences de documentation.
+- Les dépendances.
 
-Use labels consistently: type:feature, type:task, type:bug, area:backend, area:frontend, area:infra, area:security, area:docs, priority:high, priority:medium, priority:low. If labels are not available in the repository, include the intended label names in issue descriptions until they can be configured. Do not assume labels, milestones, or a project board exist unless they are visible in GitHub.
+Utiliser les labels de manière cohérente : type:feature, type:task, type:bug, area:backend, area:frontend, area:infra, area:security, area:docs, priority:high, priority:medium, priority:low. Si les labels ne sont pas disponibles dans le dépôt, indiquer les noms souhaités dans les descriptions des tickets jusqu'à leur configuration. Ne pas supposer que des labels, jalons ou tableaux de projet existent sans les voir dans GitHub.
 
-## 4. Direct-to-main change expectations
+## 4. Attentes pour les changements directs sur main
 
-Every change should:
-- Reference its GitHub issue in the commit message or implementation notes.
-- Explain what changed and why.
-- Include test commands and actual results.
-- Describe API contract, configuration, and operational changes.
-- State migration/rollback considerations.
-- Confirm no secrets or sensitive data are included.
+Chaque changement doit :
+- Référencer son ticket GitHub dans le message de commit ou les notes d'implémentation.
+- Expliquer ce qui a changé et pourquoi.
+- Inclure les commandes de test et leurs résultats réels.
+- Décrire les changements de contrat API, de configuration et d'exploitation.
+- Préciser les considérations de migration et de retour arrière.
+- Confirmer qu'aucun secret ou donnée sensible n'est inclus.
 
-## 5. Quality gates
+## 5. Contrôles qualité
 
-Backend:
-- PHPUnit tests
-- PHP-CS-Fixer or equivalent formatting
-- PHPStan
-- Symfony validation and security tests
-- OpenAPI contract validation
+Backend :
+- Tests PHPUnit.
+- Formatage PHP-CS-Fixer ou équivalent.
+- PHPStan.
+- Tests de validation et de sécurité Symfony.
+- Validation des contrats OpenAPI.
 
-Frontend:
-- ESLint
-- TypeScript typecheck
-- Component/unit tests
-- Production build
+Frontend :
+- ESLint.
+- Vérification des types TypeScript.
+- Tests unitaires/de composants.
+- Build de production.
 
-Platform:
-- Docker Compose config validation
-- Container health checks
-- Integration tests for gateway/auth/messaging
-- Dependency and secret scanning in CI
+Plateforme :
+- Validation de la configuration Docker Compose.
+- Contrôles de santé des conteneurs.
+- Tests d'intégration pour la gateway, l'authentification et la messagerie.
+- Analyse des dépendances et des secrets dans la CI.
 
-Exact commands become authoritative when the corresponding runtime/tooling is implemented. Do not report a quality gate as passed unless it has actually run.
+Les commandes exactes deviennent la référence lorsque l'outil ou l'environnement correspondant est implémenté. Ne jamais annoncer qu'un contrôle qualité a réussi sans l'avoir réellement exécuté.
 
-## 6. Security rules
+## 6. Règles de sécurité
 
-- Store local secrets in ignored `.env` or `.env.local` files or secret stores; commit only safe `.env.example` placeholders.
-- Use least privilege for service accounts and database users.
-- Validate issuer, audience, signature, expiry, and allowed algorithms for JWTs.
-- Never log bearer tokens, passwords, API keys, or sensitive payload fields.
-- Apply input validation, payload size limits, timeouts, and rate limits.
-- Treat external webhook and connector payloads as untrusted.
-- Define retention and redaction rules for integration execution logs.
-- Use synthetic data only; never commit production exports or real customer data.
+- Stocker les secrets locaux dans des fichiers `.env` ou `.env.local` ignorés par Git, ou dans un gestionnaire de secrets ; ne commiter que des valeurs fictives sûres dans les fichiers d'exemple.
+- Appliquer le principe du moindre privilège aux comptes de service et utilisateurs de base de données.
+- Valider l'issuer, l'audience, la signature, l'expiration et les algorithmes autorisés des JWT.
+- Ne jamais journaliser de jetons Bearer, mots de passe, clés API ou champs de données sensibles.
+- Appliquer la validation des entrées, les limites de taille des payloads, les timeouts et les limites de débit.
+- Considérer les payloads de webhooks externes et de connecteurs comme non fiables.
+- Définir les règles de conservation et de masquage des journaux d'exécution des intégrations.
+- Utiliser uniquement des données synthétiques ; ne jamais commiter d'exports de production ou de vraies données clients.
 
-See [Local Setup and Secret Handling](development/local-setup.md).
+Voir [Installation locale et gestion des secrets](development/local-setup.md).
 
-## 7. Documentation expectations
+## 7. Exigences de documentation
 
-Every architectural capability should document:
-- Purpose and responsibility boundaries
-- Request/event flow
-- Configuration
-- Failure modes and recovery
-- Security considerations
-- Observability signals
-- Local verification steps
-- Decisions and alternatives
+Chaque capacité architecturale doit documenter :
+- Son objectif et les frontières de responsabilité.
+- Le flux des requêtes/événements.
+- Sa configuration.
+- Les modes de panne et les procédures de récupération.
+- Les considérations de sécurité.
+- Les signaux d'observabilité.
+- Les étapes de vérification locale.
+- Les décisions prises et les alternatives.
 
-## 8. Learning and interview preparation
+## 8. Apprentissage et préparation aux entretiens
 
-For each major feature, keep a short explanation of:
-1. The problem.
-2. The chosen design.
-3. Alternatives considered.
-4. Trade-offs and failure modes.
-5. How the implementation is tested and operated.
+Pour chaque fonctionnalité majeure, conserver une explication concise de :
+1. Le problème.
+2. La conception choisie.
+3. Les alternatives envisagées.
+4. Les compromis et les modes de panne.
+5. La manière dont l'implémentation est testée et exploitée.
 
-Do not claim production experience from this portfolio project. Present it as a hands-on architecture and implementation project.
+Ne pas présenter ce projet de portfolio comme une expérience de production. Le présenter comme un projet pratique d'architecture et d'implémentation.
 
-## 9. Local prerequisites
+## 9. Prérequis locaux
 
-Docker Engine/Desktop with Compose v2 and Git are the baseline prerequisites. PHP 8.4/Composer 2 and Node.js/npm are optional host tools when not using containers.
+Docker Engine/Desktop avec Compose v2 et Git constituent les prérequis de base. PHP 8.4/Composer 2 et Node.js/npm sont des outils facultatifs sur la machine hôte si les conteneurs ne sont pas utilisés.
 
-See [Local Development Setup](development/local-setup.md).
+Voir [Installation locale](development/local-setup.md).

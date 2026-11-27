@@ -1,31 +1,31 @@
-# Enterprise API Integration Platform
+# Plateforme d'intégration d'API d'entreprise
 
-A production-minded learning project demonstrating enterprise API management, API governance, secure service integration, event-driven architecture, and an extensible iPaaS-style integration runtime.
+Un projet pratique orienté production pour démontrer la gestion et la gouvernance des API, l'intégration sécurisée de services, l'architecture événementielle et un moteur d'intégration extensible de type iPaaS.
 
-> **Purpose:** build and explain a realistic platform relevant to a Senior API Developer role. This is an independent portfolio project, not a DEVK system.
+> **Objectif :** construire et expliquer une plateforme réaliste en lien avec un poste de Senior API Developer. Il s'agit d'un projet de portfolio indépendant, et non d'un système de DEVK.
 
-## Current implementation
+## Éléments actuellement implémentés
 
-- Symfony 7.4 / PHP 8.4 customer API.
-- PostgreSQL 17 with persistent Docker volume.
-- Keycloak 26.3.3 with a reproducible local `enterprise-platform` realm.
-- OIDC Authorization Code + PKCE for the public portal client.
-- OAuth 2.0 Client Credentials for the confidential machine client.
-- Realm roles, API audience, five-minute access tokens, and JWKS rotation guidance.
-- Docker Compose local runtime and container health checks.
-- Liveness endpoint: `GET /health`.
-- Readiness endpoint: `GET /health/ready` (executes `SELECT 1` against PostgreSQL).
-- PHPUnit unit and functional test suites.
-- PHPStan static analysis and PHP-CS-Fixer code style.
-- GitHub Actions backend quality workflow.
+- API Customer avec Symfony 7.4 / PHP 8.4.
+- PostgreSQL 17 avec volume Docker persistant.
+- Keycloak 26.3.3 avec un realm local reproductible `enterprise-platform`.
+- OIDC Authorization Code + PKCE pour le client public du portail.
+- OAuth 2.0 Client Credentials pour le client machine confidentiel.
+- Rôles du realm, audience API, jetons d'accès de cinq minutes et consignes de rotation JWKS.
+- Environnement local Docker Compose et contrôles de santé des conteneurs.
+- Endpoint de vivacité : `GET /health`.
+- Endpoint de disponibilité : `GET /health/ready` (exécute `SELECT 1` sur PostgreSQL).
+- Suites de tests unitaires et fonctionnels PHPUnit.
+- Analyse statique PHPStan et formatage PHP-CS-Fixer.
+- Workflow qualité backend avec GitHub Actions.
 
-## Start locally
+## Démarrage local
 
-Requirements: Git, Docker Engine/Desktop, Docker Compose v2.
+Prérequis : Git, Docker Engine/Desktop et Docker Compose v2.
 
 ~~~bash
 cp .env.example .env
-# Replace every placeholder in .env with private local values.
+# Remplacer chaque valeur fictive du fichier .env par une valeur locale privée.
 docker compose config --quiet
 docker compose up -d --build
 docker compose ps
@@ -34,9 +34,9 @@ sh scripts/keycloak-provision.sh
 sh scripts/keycloak-token-smoke-test.sh
 ~~~
 
-See [Keycloak identity flows](docs/security/keycloak-identity.md) for PKCE, Client Credentials, token validation, and key rotation.
+Consulter [Les flux d'identité Keycloak](docs/security/keycloak-identity.md) pour PKCE, Client Credentials, la validation des jetons et la rotation des clés.
 
-Verify the API endpoints:
+Vérifier les endpoints de l'API :
 
 ~~~bash
 curl -i http://localhost:8000/health
@@ -44,9 +44,9 @@ curl -i http://localhost:8000/health/ready
 bash scripts/smoke-test.sh
 ~~~
 
-## Backend quality commands
+## Commandes de qualité backend
 
-The API container includes Composer and the project dependencies:
+Le conteneur API inclut Composer et les dépendances du projet :
 
 ~~~bash
 docker compose exec api php bin/console about
@@ -57,7 +57,7 @@ docker compose exec api composer analyse
 docker compose exec api composer cs:check
 ~~~
 
-The first dependency resolution creates `composer.lock` inside the container. Copy it to the repository and commit it so local builds and CI use the same exact dependency versions:
+La première résolution des dépendances crée `composer.lock` dans le conteneur. Il faut le copier dans le dépôt et le commiter afin que les builds locaux et la CI utilisent exactement les mêmes versions :
 
 ~~~bash
 docker compose cp api:/app/composer.lock ./composer.lock
@@ -66,7 +66,7 @@ git commit -m "chore(deps): lock Symfony backend dependencies (#15)"
 git push origin main
 ~~~
 
-## Useful Docker commands
+## Commandes Docker utiles
 
 ~~~bash
 docker compose logs -f
@@ -77,72 +77,72 @@ docker compose down
 docker compose up -d
 ~~~
 
-**Destructive reset:** this deletes the PostgreSQL and Keycloak volumes and all local data.
+**Réinitialisation destructive :** cette opération supprime les volumes PostgreSQL et Keycloak ainsi que toutes les données locales qu'ils contiennent.
 
 ~~~bash
 docker compose down -v
 docker compose up -d --build
 ~~~
 
-The API is exposed on 127.0.0.1:8000, PostgreSQL on 127.0.0.1:5432, and Keycloak on 127.0.0.1:8081. The database is reachable from the API container at database:5432. Use synthetic data only.
+L'API est exposée sur 127.0.0.1:8000, PostgreSQL sur 127.0.0.1:5432 et Keycloak sur 127.0.0.1:8081. Depuis le conteneur API, la base est accessible à l'adresse `database:5432`. Utiliser uniquement des données synthétiques.
 
-## Planned technology baseline
+## Socle technologique cible
 
-| Concern | Initial choice |
+| Domaine | Choix initial |
 |---|---|
-| Backend services | PHP 8.4, Symfony 7.4 |
-| Admin portal | React, TypeScript, Vite |
+| Services backend | PHP 8.4, Symfony 7.4 |
+| Portail d'administration | React, TypeScript, Vite |
 | API Gateway | Kong Gateway (OSS) |
-| Identity | Keycloak (OAuth 2.0 / OIDC) |
-| API contract | OpenAPI 3.1 |
-| API linting/governance | Spectral |
-| Relational data | PostgreSQL |
-| Messaging | RabbitMQ |
-| Event streaming | Apache Kafka |
-| Cache | Redis, only where justified |
-| Observability | OpenTelemetry, Prometheus, Grafana, Loki, Jaeger |
-| Local runtime | Docker Compose |
-| Delivery | GitHub Actions |
+| Identité | Keycloak (OAuth 2.0 / OIDC) |
+| Contrats API | OpenAPI 3.1 |
+| Linting/gouvernance API | Spectral |
+| Base relationnelle | PostgreSQL |
+| Messagerie | RabbitMQ |
+| Streaming d'événements | Apache Kafka |
+| Cache | Redis, uniquement si un besoin le justifie |
+| Observabilité | OpenTelemetry, Prometheus, Grafana, Loki, Jaeger |
+| Environnement local | Docker Compose |
+| Livraison continue | GitHub Actions |
 
-This is a practical reference architecture, not a vendor requirement. Versions and design decisions are documented in [ADRs](docs/adr/README.md).
+Il s'agit d'une architecture de référence pratique, et non d'une obligation liée à un fournisseur. Les versions et décisions de conception sont consignées dans les [ADR](docs/adr/README.md).
 
-## Architecture at a glance
+## Architecture en bref
 
-React Developer/Admin Portal → Kong Gateway → Symfony domain APIs
+Portail React Développeur/Administration → Kong Gateway → API métier Symfony
 
-Supporting capabilities:
-- Keycloak provides human and machine identity and OAuth2/OIDC token issuance.
-- PostgreSQL stores service-owned transactional data.
-- RabbitMQ handles task-oriented asynchronous messaging.
-- Kafka carries durable domain event streams where replay or multiple consumers matter.
-- The integration runtime connects systems through adapters, transformations, routing, and execution history.
-- OpenTelemetry instruments services; Prometheus/Grafana, Loki, and Jaeger provide operational visibility.
+Composants complémentaires :
+- Keycloak gère les identités humaines et machines et émet les jetons OAuth2/OIDC.
+- PostgreSQL stocke les données transactionnelles appartenant à chaque service.
+- RabbitMQ gère les traitements asynchrones orientés tâches.
+- Kafka transporte les flux d'événements métier durables lorsque le rejeu ou plusieurs consommateurs sont nécessaires.
+- Le moteur d'intégration connecte les systèmes via des adaptateurs, transformations, règles de routage et exécutions.
+- OpenTelemetry instrumente les services ; Prometheus/Grafana, Loki et Jaeger assurent l'exploitation des métriques, journaux et traces.
 
-See [Architecture](docs/architecture/overview.md), [Technology decisions](docs/architecture/technology-decisions.md), and [Roadmap](docs/roadmap/README.md).
+Voir [Vue d'ensemble de l'architecture](docs/architecture/overview.md), [Choix technologiques](docs/architecture/technology-decisions.md) et [Feuille de route](docs/roadmap/README.md).
 
 ## Documentation
 
-- [Project Handbook](docs/PROJECT-HANDBOOK.md)
-- [Contributing Guide](CONTRIBUTING.md) — direct-to-main workflow.
-- [Development Workflow](docs/development/workflow.md)
-- [Local Setup](docs/development/local-setup.md)
-- [Repository Structure](docs/development/repository-structure.md)
-- [Architecture Overview](docs/architecture/overview.md)
-- [Service Boundaries](docs/architecture/service-boundaries.md)
-- [Keycloak Identity Flows](docs/security/keycloak-identity.md)
-- [Technology decisions](docs/architecture/technology-decisions.md)
-- [Architecture Decision Records](docs/adr/README.md)
-- [API Governance](docs/api-governance/standards.md)
-- [Security Threat Model](docs/security/threat-model.md)
-- [iPaaS Design](docs/integration/ipaas-design.md)
-- [Observability](docs/operations/observability.md)
-- [Roadmap](docs/roadmap/README.md)
+- [Guide du projet](docs/PROJECT-HANDBOOK.md)
+- [Guide de contribution](CONTRIBUTING.md) — workflow direct sur main.
+- [Workflow de développement](docs/development/workflow.md)
+- [Installation locale](docs/development/local-setup.md)
+- [Structure du dépôt](docs/development/repository-structure.md)
+- [Vue d'ensemble de l'architecture](docs/architecture/overview.md)
+- [Frontières des services](docs/architecture/service-boundaries.md)
+- [Flux d'identité Keycloak](docs/security/keycloak-identity.md)
+- [Choix technologiques](docs/architecture/technology-decisions.md)
+- [Registre des décisions d'architecture](docs/adr/README.md)
+- [Gouvernance des API](docs/api-governance/standards.md)
+- [Modèle de menaces de sécurité](docs/security/threat-model.md)
+- [Conception iPaaS](docs/integration/ipaas-design.md)
+- [Observabilité](docs/operations/observability.md)
+- [Feuille de route](docs/roadmap/README.md)
 
-## Delivery approach
+## Méthode de livraison
 
-We work directly on `main` for this repository. Do not create branches or pull requests. Work on one ticket at a time, use focused Conventional Commit messages with the issue number, validate changes, and document actual test results.
+Nous travaillons directement sur `main` pour ce dépôt. Ne créer ni branche ni pull request. Traiter un ticket à la fois, utiliser des messages Conventional Commits ciblés avec le numéro du ticket, valider les changements et documenter les résultats réellement obtenus.
 
-## Repository structure (target)
+## Structure cible du dépôt
 
 ~~~text
 .
@@ -165,12 +165,12 @@ We work directly on `main` for this repository. Do not create branches or pull r
 └── docs/
 ~~~
 
-The structure is a target, not a claim that every listed service already exists.
+Cette arborescence est une cible : elle ne signifie pas que tous les composants listés existent déjà.
 
-## Status
+## État du projet
 
-**Phase 01 — Runtime foundation:** Docker Compose and the Symfony backend bootstrap are committed. Phase 02 defines the initial domain boundaries and Customer API. Phase 03 introduces identity and gateway enforcement.
+**Phase 01 — Socle d'exécution :** Docker Compose et le squelette backend Symfony sont committés. La Phase 02 définit les premières frontières métier et l'API Customer. La Phase 03 introduit l'identité et l'application des règles de sécurité au niveau de la gateway.
 
-## Learning outcomes
+## Objectifs d'apprentissage
 
-The completed project will provide concrete code and tests to explain API design and governance, gateway responsibilities, OAuth2/OIDC, threat protection, synchronous vs asynchronous integration, delivery guarantees, iPaaS connector design, observability, and operational trade-offs.
+Le projet doit fournir du code et des tests concrets pour expliquer la conception et la gouvernance des API, les responsabilités d'une gateway, OAuth2/OIDC, la protection contre les menaces, l'intégration synchrone et asynchrone, les garanties de livraison, la conception de connecteurs iPaaS, l'observabilité et les compromis opérationnels.

@@ -1,33 +1,39 @@
-# ADR-0006: Focused iPaaS Connector and Workflow Model
+# ADR-0006 : Modèle ciblé de connecteurs et de workflows iPaaS
 
-- **Status:** Proposed
-- **Date:** 2026-11-27
-- **Related issue:** [#12](https://github.com/rami-aouinti/enterprise-api-platform/issues/12)
+- **Statut :** Proposé
+- **Date :** 2026-11-27
+- **Ticket associé :** [#12](https://github.com/rami-aouinti/enterprise-api-platform/issues/12)
 
-## Context
-Enterprise integrations connect systems with different protocols, payload schemas, authentication models, and reliability characteristics. Embedding one-off integration logic in every domain service would create duplication and tight coupling.
+## Contexte
 
-## Decision
-Build a focused educational integration runtime with a registry of typed source/target connectors and declarative workflows. A workflow defines a trigger, connector references, input/output schemas, mapping steps, destination action, timeout, retry policy, and execution metadata.
+Les intégrations d'entreprise connectent des systèmes qui utilisent des protocoles, schémas de payload, modèles d'authentification et caractéristiques de fiabilité différents. Intégrer une logique spécifique à chaque connexion dans tous les services métier créerait des duplications et un couplage fort.
 
-Start with a deliberately small connector set: HTTP webhook/API and a broker-backed connector. Keep connector secrets as references to runtime-injected secret values; never store raw credentials in workflow definitions or execution logs.
+## Décision
 
-Validate incoming payloads, apply explicit mappings, enforce outbound destination policies, and record execution lifecycle with correlation ID, timestamps, status, and redacted diagnostics. Retries are bounded and use backoff; exhausted executions become visible for controlled replay.
+Construire un moteur d'intégration pédagogique ciblé avec un registre de connecteurs source/cible typés et des workflows déclaratifs. Un workflow définit un déclencheur, des références de connecteurs, les schémas d'entrée/sortie, les étapes de mapping, l'action de destination, le timeout, la politique de retry et les métadonnées d'exécution.
 
-The runtime orchestrates connectivity and transformation only. Domain services continue to own business rules and invariants.
+Commencer avec un ensemble volontairement réduit de connecteurs : webhook/API HTTP et connecteur adossé à un broker. Les secrets des connecteurs sont des références vers des valeurs injectées à l'exécution ; ne jamais stocker de vrais identifiants dans les définitions de workflow ou les journaux d'exécution.
 
-## Alternatives considered
-1. Point-to-point integration in each service: simple for one integration, but duplicates adapters and inconsistent retries.
-2. Full commercial iPaaS: realistic in some enterprises, but outside project scope and may require licenses.
-3. General-purpose workflow engine first: powerful, but risks building orchestration infrastructure before validating connector requirements.
+Valider les payloads entrants, appliquer des mappings explicites, contrôler les destinations sortantes et enregistrer le cycle de vie de chaque exécution avec identifiant de corrélation, horodatages, statut et diagnostics expurgés. Les tentatives sont limitées et utilisent un backoff ; les exécutions épuisées deviennent visibles pour un rejeu contrôlé.
 
-## Consequences
-**Positive:** reusable connector contracts; consistent execution history; explicit, testable, auditable integration behavior; domain services remain decoupled from external protocols.
+Le moteur orchestre uniquement la connectivité et la transformation. Les services métier restent propriétaires des règles et invariants métier.
 
-**Negative:** connector abstractions and workflow validation add complexity; SSRF, credential handling, retries, and replay require controls; runtime can become a bottleneck if it absorbs business logic.
+## Alternatives étudiées
 
-## Security and operations
-Protect against SSRF with destination allow-lists, DNS/IP validation, blocked private/link-local/metadata ranges, redirect controls, and egress restrictions. Apply timeouts, payload limits, schema validation, secret redaction, tenant/consumer authorization, and audit trails. Replay must be authorized and idempotent.
+1. Intégration point à point dans chaque service : simple pour une intégration, mais duplique les adaptateurs et produit des retries incohérents.
+2. iPaaS commercial complet : réaliste dans certaines entreprises, mais hors périmètre du projet et potentiellement soumis à licence.
+3. Commencer par un moteur de workflow généraliste : puissant, mais risque de construire une infrastructure d'orchestration avant d'avoir validé les besoins des connecteurs.
 
-## Review criteria
-Revisit the workflow model after implementing the first end-to-end connector pair; simplify abstractions not justified by actual connector behavior.
+## Conséquences
+
+**Avantages :** contrats de connecteurs réutilisables ; historique d'exécution cohérent ; comportement d'intégration explicite, testable et auditable ; services métier découplés des protocoles externes.
+
+**Inconvénients :** les abstractions de connecteurs et la validation des workflows ajoutent de la complexité ; SSRF, gestion des identifiants, retries et rejeu nécessitent des contrôles ; le moteur peut devenir un goulot d'étranglement s'il absorbe la logique métier.
+
+## Sécurité et exploitation
+
+Se protéger contre les SSRF avec des listes d'autorisation de destinations, validation DNS/IP, blocage des plages privées/link-local/de métadonnées, contrôle des redirections et restrictions de sortie réseau. Appliquer des timeouts, limites de payload, validation de schéma, masquage des secrets, autorisation par tenant/consommateur et pistes d'audit. Le rejeu doit être autorisé et idempotent.
+
+## Critères de révision
+
+Revoir le modèle de workflow après l'implémentation de la première paire de connecteurs de bout en bout ; simplifier les abstractions qui ne sont pas justifiées par le comportement réel des connecteurs.

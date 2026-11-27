@@ -1,37 +1,43 @@
-# ADR-0001: Service Boundaries and Data Ownership
+# ADR-0001 : Frontières des services et propriété des données
 
-- **Status:** Accepted
-- **Date:** 2026-11-27
-- **Related issues:** #12, #17
+- **Statut :** Accepté
+- **Date :** 2026-11-27
+- **Tickets associés :** #12, #17
 
-## Context
-The platform models customer, policy, claims, and billing capabilities. A shared database or shared domain model would tightly couple services and allow one service to change another service's data without its owner's knowledge.
+## Contexte
 
-## Decision
-Use business capabilities as the initial service boundaries:
-- Customer Service owns customer identity/profile and contact data.
-- Policy Service owns policy lifecycle, insured risks, coverage selections, and policy terms.
-- Claims Service owns claim intake, evidence references, assessment, decisions, and claim lifecycle.
-- Billing Service owns invoices, payment allocations, payment status, and billing records.
+La plateforme modélise les capacités Client, Contrat, Sinistres et Facturation. Une base de données ou un modèle métier partagé couplerait fortement les services et permettrait à un service de modifier les données d'un autre sans que leur propriétaire en soit informé.
 
-Each service owns its business rules, schema, migrations, database credentials, and persistence lifecycle. The target deployment uses a separate database per service. During local development, services may share a PostgreSQL server instance, but must use separate databases and credentials; sharing a server is an infrastructure choice, not shared data ownership.
+## Décision
 
-Other services access owned data only through versioned APIs or published integration events. Direct reads/writes against another service's tables, shared ORM entities, and cross-service foreign keys are prohibited. Shared packages are limited to technical utilities and versioned contracts, not shared domain models.
+Utiliser les capacités métier comme frontières initiales des services :
+- Customer Service est propriétaire de l'identité, du profil et des coordonnées des clients.
+- Policy Service est propriétaire du cycle de vie des contrats, des risques assurés, des garanties sélectionnées et des conditions contractuelles.
+- Claims Service est propriétaire de la déclaration des sinistres, des références aux justificatifs, de l'évaluation, des décisions et du cycle de vie des sinistres.
+- Billing Service est propriétaire des factures, des affectations de paiements, de leur statut et des écritures de facturation.
 
-Cross-service workflows use explicit APIs or asynchronous messages. Distributed transactions are not assumed. Workflows spanning services must model state, timeouts, retries, idempotency, and recovery explicitly.
+Chaque service possède ses règles métier, son schéma, ses migrations, ses identifiants de base de données et son cycle de vie de persistance. La cible de déploiement utilise une base de données par service. En développement local, les services peuvent partager une même instance PostgreSQL, mais doivent utiliser des bases et des identifiants distincts. Le partage du serveur est un choix d'infrastructure, pas un partage de propriété des données.
 
-## Alternatives considered
-1. One modular monolith and one schema: simpler initially, but weaker demonstration of independent service ownership and deployment.
-2. Microservices sharing one database/schema: distributed deployment with continued data coupling; rejected.
-3. Database-per-service on separate PostgreSQL server instances: strongest infrastructure isolation, but unnecessary operational overhead for the local learning environment. Separate databases and credentials on one local server are sufficient initially.
+Les autres services accèdent aux données détenues uniquement par des API versionnées ou des événements d'intégration publiés. Les lectures/écritures directes dans les tables d'un autre service, les entités ORM partagées et les clés étrangères interservices sont interdites. Les packages partagés sont limités aux utilitaires techniques et aux contrats versionnés, et non aux modèles métier partagés.
 
-## Consequences
-**Positive:** clear ownership and authorization boundaries; independent service evolution; explicit integration contracts; independent schema migrations and backup/restore boundaries.
+Les workflows interservices utilisent des API explicites ou des messages asynchrones. Les transactions distribuées ne sont pas présumées disponibles. Les workflows couvrant plusieurs services doivent modéliser explicitement leur état, leurs timeouts, leurs tentatives, leur idempotence et leur récupération.
 
-**Negative:** cross-service reads require APIs/events; eventual consistency and duplicate delivery must be handled; more operational and testing boundaries are required.
+## Alternatives étudiées
 
-## Security and operations
-Enforce service-level authorization on every protected operation. Each service receives credentials only for its own database. Never expose database credentials to another service. Propagate trace and correlation context across HTTP and messaging boundaries. Minimize personal and payment data in events; publish identifiers and business facts rather than entire records.
+1. Monolithe modulaire et schéma unique : plus simple au départ, mais démontre moins bien la propriété indépendante des données et le déploiement autonome.
+2. Microservices partageant une base/un schéma : déploiement distribué tout en conservant le couplage des données ; option rejetée.
+3. Une base par service sur des instances PostgreSQL séparées : isolation d'infrastructure maximale, mais surcharge opérationnelle inutile pour l'environnement local d'apprentissage. Des bases et identifiants distincts sur un même serveur local suffisent au départ.
 
-## Review criteria
-Revisit boundaries if a capability has no independent business lifecycle, synchronous calls create excessive runtime coupling, or operational overhead outweighs the value.
+## Conséquences
+
+**Avantages :** frontières claires de propriété et d'autorisation ; évolution indépendante des services ; contrats d'intégration explicites ; migrations de schéma et limites de sauvegarde/restauration indépendantes.
+
+**Inconvénients :** les lectures interservices nécessitent des API/événements ; la cohérence éventuelle et les livraisons en double doivent être gérées ; davantage de frontières opérationnelles et de test sont nécessaires.
+
+## Sécurité et exploitation
+
+Appliquer l'autorisation au niveau du service pour chaque opération protégée. Chaque service ne reçoit des identifiants que pour sa propre base. Ne jamais exposer les identifiants d'une base à un autre service. Propager le contexte de trace et de corrélation à travers HTTP et la messagerie. Réduire les données personnelles et de paiement dans les événements ; publier des identifiants et des faits métier plutôt que des enregistrements complets.
+
+## Critères de révision
+
+Revoir les frontières si une capacité ne possède pas de cycle de vie métier indépendant, si les appels synchrones créent un couplage d'exécution excessif ou si les coûts opérationnels dépassent les bénéfices.
