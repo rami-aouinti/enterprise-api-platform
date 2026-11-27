@@ -9,7 +9,7 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 $envFile = dirname(__DIR__) . '/.env';
 
 if (is_file($envFile)) {
-    (new Dotenv())->bootEnv($envFile);
+    new Dotenv()->bootEnv($envFile);
 }
 
 if (($_SERVER['APP_DEBUG'] ?? $_ENV['APP_DEBUG'] ?? false)) {
