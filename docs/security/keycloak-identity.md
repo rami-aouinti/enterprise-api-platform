@@ -71,17 +71,18 @@ informations de découverte et les clés selon leur politique de cache.
 Les routes `/health` et `/health/ready` restent publiques pour les contrôles
 de santé Docker et Kong. Les routes Customer API sont protégées :
 
-| Route | Permission |
+| Route | Scope requis |
 |---|---|
-| `GET /api/v1/customers` | `api.read` |
-| `GET /api/v1/customers/{id}` | `api.read` |
-| `POST /api/v1/customers` | `api.write` |
-| `PATCH /api/v1/customers/{id}` | `api.write` |
+| `GET /api/v1/customers` | `customers:read` |
+| `GET /api/v1/customers/{id}` | `customers:read` |
+| `POST /api/v1/customers` | `customers:write` |
+| `PATCH /api/v1/customers/{id}` | `customers:write` |
 
-Le fournisseur Symfony traduit les rôles Keycloak en rôles applicatifs :
-`api.read` → `ROLE_API_READ`, `api.write` → `ROLE_API_WRITE`.
-Le rôle `platform-admin` reçoit les deux permissions. Les autres rôles du realm,
-comme `portal-user`, ne donnent aucun accès à la Customer API.
+Le fournisseur Symfony extrait les scopes autorisés depuis le claim `scope`.
+Le `KeycloakScopeVoter` contrôle ensuite l'attribut requis sur chaque route.
+Les rôles Keycloak (`api.read`, `api.write`, `platform-admin`) restent mappés
+sur des rôles Symfony pour illustrer le mécanisme RBAC, mais ils ne donnent plus
+à eux seuls accès à la Customer API.
 
 - `401 Unauthorized` : jeton absent, invalide, expiré ou non destiné à cette API.
 - `403 Forbidden` : jeton valide, mais permission requise absente.
@@ -225,6 +226,26 @@ curl -i http://localhost:8001/api/v1/customers \
 Un token sans `customers:read` doit recevoir `403 Forbidden`, même si son
 client possède encore l'ancien rôle `api.read`. Cela permet de vérifier que
 l'autorisation est réellement basée sur le scope.
+
+Pour vérifier automatiquement les cas d'authentification et d'autorisation,
+exécuter le smoke test de bout en bout. Il demande trois jetons (sans scope,
+lecture et écriture) puis teste les réponses attendues via Kong :
+
+~~~bash
+bash scripts/keycloak-scope-smoke-test.sh
+~~~
+
+Le script vérifie notamment :
+
+- aucun jeton → `401` ;
+- jeton sans scope de lecture → `403` sur GET ;
+- `customers:read` → `200` sur GET, mais `403` sur POST/PATCH ;
+- `customers:write` → la requête atteint la validation ou la recherche métier
+  (respectivement `422` et `404` dans les scénarios sans effet de bord).
+
+Les tests unitaires couvrent également les décisions positives et négatives du
+`KeycloakScopeVoter`. Le smoke test, lui, valide la chaîne réelle Keycloak →
+Kong → Symfony.
 
 ## Authorization Code avec PKCE (client public navigateur)
 
