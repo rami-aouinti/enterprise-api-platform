@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\\Controller;
+namespace App\Controller;
 
-use Doctrine\\DBAL\\Connection;
-use Symfony\\Component\\HttpFoundation\\JsonResponse;
-use Symfony\\Component\\Routing\\Attribute\\Route;
+use Doctrine\DBAL\Connection;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Attribute\Route;
 
 final readonly class HealthController
 {
@@ -29,7 +29,7 @@ final readonly class HealthController
     {
         try {
             $this->connection->executeQuery('SELECT 1')->fetchOne();
-        } catch (\\Throwable) {
+        } catch (\Throwable) {
             return new JsonResponse([
                 'status' => 'not_ready',
                 'database' => 'unavailable',
