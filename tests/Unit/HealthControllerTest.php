@@ -6,8 +6,9 @@ namespace App\\Tests\\Unit;
 
 use App\\Controller\\HealthController;
 use Doctrine\\DBAL\\Connection;
-use Doctrine\\DBAL\\Exception\\ConnectionException;
+use Doctrine\\DBAL\\Result;
 use PHPUnit\\Framework\\TestCase;
+use RuntimeException;
 
 final class HealthControllerTest extends TestCase
 {
@@ -17,7 +18,7 @@ final class HealthControllerTest extends TestCase
         $connection->expects(self::once())
             ->method('executeQuery')
             ->with('SELECT 1')
-            ->willReturn($this->createMock(\\Doctrine\\DBAL\\Result::class));
+            ->willReturn($this->createMock(Result::class));
 
         $response = (new HealthController($connection))->ready();
 
@@ -34,7 +35,7 @@ final class HealthControllerTest extends TestCase
         $connection->expects(self::once())
             ->method('executeQuery')
             ->with('SELECT 1')
-            ->willThrowException($this->createMock(ConnectionException::class));
+            ->willThrowException(new RuntimeException('Database unavailable'));
 
         $response = (new HealthController($connection))->ready();
 
