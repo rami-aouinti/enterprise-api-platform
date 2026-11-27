@@ -237,7 +237,10 @@ bash scripts/keycloak-scope-smoke-test.sh
 
 Le script vérifie notamment :
 
+- `/health` reste public → `200` ;
 - aucun jeton → `401` ;
+- JWT mal formé → `401` ;
+- JWT dont la signature a été modifiée → `401` ;
 - jeton sans scope de lecture → `403` sur GET ;
 - `customers:read` → `200` sur GET, mais `403` sur POST/PATCH ;
 - `customers:write` → la requête atteint la validation ou la recherche métier
@@ -245,7 +248,10 @@ Le script vérifie notamment :
 
 Les tests unitaires couvrent également les décisions positives et négatives du
 `KeycloakScopeVoter`. Le smoke test, lui, valide la chaîne réelle Keycloak →
-Kong → Symfony.
+Kong → Symfony, y compris le rejet d'une signature JWT altérée. Il s'agit d'un
+test d'intégration exécuté contre les services Docker démarrés, distinct de la
+suite PHPUnit qui désactive volontairement le firewall OIDC dans l'environnement
+de test.
 
 ## Authorization Code avec PKCE (client public navigateur)
 
