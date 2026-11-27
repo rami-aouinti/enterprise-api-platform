@@ -16,11 +16,11 @@ The platform demonstrates how an organization can expose and govern APIs while i
 
 ### Domain services
 - **Customer Service:** customer profile and contact data.
-- **Policy Service:** policy lifecycle and coverage.
-- **Claims Service:** claim intake and status.
-- **Billing Service:** invoices and payment status.
+- **Policy Service:** policy lifecycle, insured risks, and coverage.
+- **Claims Service:** claim intake, assessment, decisions, and lifecycle.
+- **Billing Service:** invoices, payment allocations, and payment status.
 
-Each service owns its data and exposes versioned contracts. Cross-service workflows should avoid shared database writes.
+Each service owns its business invariants, database, migrations, and credentials. Services expose versioned contracts; cross-service workflows use APIs or events, never another service's private tables. See [Service Boundaries and Domain Context Map](service-boundaries.md).
 
 ### Integration and messaging
 - **RabbitMQ:** task/work-queue messaging, command-like asynchronous jobs, retries, and dead-letter queues.
@@ -28,7 +28,7 @@ Each service owns its data and exposes versioned contracts. Cross-service workfl
 - **Integration Runtime (iPaaS-style):** connector registry, source/target configuration, mapping, validation, routing, workflow execution, retry policy, and execution history.
 
 ### Data and operations
-- **PostgreSQL:** service-owned transactional persistence and platform configuration.
+- **PostgreSQL:** service-owned transactional databases and platform configuration. Local development may share a PostgreSQL server while keeping service databases and credentials separate.
 - **Redis:** cache only where a measured use case justifies it.
 - **OpenTelemetry:** common instrumentation for traces, metrics, and logs.
 - **Prometheus/Grafana:** metrics and dashboards.
