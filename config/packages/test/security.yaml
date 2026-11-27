@@ -1,0 +1,7 @@
+# Les tests de contrôleurs vérifient les contrats HTTP et le domaine indépendamment
+# du fournisseur OIDC. La validation JWT réelle est exercée via Keycloak en intégration.
+security:
+    firewalls:
+        main:
+            security: false
+    access_control: []

@@ -1,11 +1,11 @@
 FROM php:8.4-cli-alpine
 
 RUN set -eux; \
-    apk add --no-cache libpq; \
-    apk add --no-cache --virtual .build-deps $PHPIZE_DEPS postgresql-dev; \
-    docker-php-ext-install pdo_pgsql; \
+    apk add --no-cache libpq gmp; \
+    apk add --no-cache --virtual .build-deps $PHPIZE_DEPS postgresql-dev gmp-dev; \
+    docker-php-ext-install pdo_pgsql gmp; \
     apk del .build-deps; \
-    php -r 'exit(extension_loaded("pdo_pgsql") ? 0 : 1);'
+    php -r 'exit(extension_loaded("pdo_pgsql") && extension_loaded("gmp") ? 0 : 1);'
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

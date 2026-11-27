@@ -15,11 +15,16 @@ services:
       DB_NAME: ${POSTGRES_DB:-enterprise_api}
       DB_USER: ${POSTGRES_USER:-enterprise_api}
       DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER:-http://localhost:8081/realms/enterprise-platform}
+      KEYCLOAK_DISCOVERY_BASE_URI: ${KEYCLOAK_DISCOVERY_BASE_URI:-http://keycloak:8080/realms/enterprise-platform/}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE:-enterprise-api}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
       database:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     networks: [platform]
     healthcheck:
       test: ["CMD", "php", "-r", '$$r=@file_get_contents("http://127.0.0.1:8000/health/ready"); exit($$r === false ? 1 : 0);']
@@ -56,6 +61,8 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Set KEYCLOAK_ADMIN_PASSWORD in .env}
       KC_HEALTH_ENABLED: "true"
       KC_METRICS_ENABLED: "true"
+      KC_HOSTNAME: ${KEYCLOAK_PUBLIC_URL:-http://localhost:8081}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
       KEYCLOAK_MACHINE_CLIENT_SECRET: ${KEYCLOAK_MACHINE_CLIENT_SECRET:?Set KEYCLOAK_MACHINE_CLIENT_SECRET in .env}
     ports: ["127.0.0.1:8081:8080", "127.0.0.1:9000:9000"]
     volumes:
@@ -92,32 +99,9 @@ services:
       retries: 10
       start_period: 10s
 
-###> doctrine/doctrine-bundle ###
-  database:
-    image: postgres:${POSTGRES_VERSION:-16}-alpine
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-app}
-      # You should definitely change the password in production
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
-      POSTGRES_USER: ${POSTGRES_USER:-app}
-    healthcheck:
-      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB:-app}", "-U", "${POSTGRES_USER:-app}"]
-      timeout: 5s
-      retries: 5
-      start_period: 60s
-    volumes:
-      - database_data:/var/lib/postgresql/data:rw
-      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
-      # - ./docker/db/data:/var/lib/postgresql/data:rw
-###< doctrine/doctrine-bundle ###
-
 networks:
   platform:
     driver: bridge
 volumes:
   postgres_data:
   keycloak_data:
-
-###> doctrine/doctrine-bundle ###
-  database_data:
-###< doctrine/doctrine-bundle ###
