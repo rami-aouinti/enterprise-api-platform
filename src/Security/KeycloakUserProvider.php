@@ -8,6 +8,9 @@ use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\AttributesBasedUserProviderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
+/**
+ * @implements AttributesBasedUserProviderInterface<KeycloakUser>
+ */
 final class KeycloakUserProvider implements AttributesBasedUserProviderInterface
 {
     private const array SUPPORTED_SCOPES = [
@@ -15,7 +18,11 @@ final class KeycloakUserProvider implements AttributesBasedUserProviderInterface
         'customers:write',
     ];
 
-    public function loadUserByIdentifier(string $identifier, array $attributes = []): UserInterface
+    /**
+     * @param non-empty-string $identifier
+     * @param array<string, mixed> $attributes
+     */
+    public function loadUserByIdentifier(string $identifier, array $attributes = []): KeycloakUser
     {
         $realmRoles = $attributes['realm_access']['roles'] ?? [];
         if (!is_array($realmRoles)) {
