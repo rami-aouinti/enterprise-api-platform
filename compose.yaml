@@ -1,0 +1,62 @@
+name: enterprise-api-platform
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/api/Dockerfile
+    container_name: enterprise-api
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      APP_PORT: 8000
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-enterprise_api}
+      DB_USER: ${POSTGRES_USER:-enterprise_api}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - platform
+    healthcheck:
+      test:
+        - CMD
+        - php
+        - -r
+        - '$r=@file_get_contents("http://127.0.0.1:8000/health"); exit($r === false ? 1 : 0);'
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  database:
+    image: postgres:17-alpine
+    container_name: enterprise-api-database
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-enterprise_api}
+      POSTGRES_USER: ${POSTGRES_USER:-enterprise_api}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - platform
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-enterprise_api} -d ${POSTGRES_DB:-enterprise_api}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+networks:
+  platform:
+    driver: bridge
+
+volumes:
+  postgres_data:
