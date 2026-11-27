@@ -19,6 +19,11 @@ services:
       KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER:-http://localhost:8081/realms/enterprise-platform}
       KEYCLOAK_DISCOVERY_BASE_URI: ${KEYCLOAK_DISCOVERY_BASE_URI:-http://keycloak:8080/realms/enterprise-platform/}
       KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE:-enterprise-api}
+      AMQP_HOST: rabbitmq
+      AMQP_PORT: 5672
+      AMQP_USER: ${RABBITMQ_DEFAULT_USER:-enterprise_api}
+      AMQP_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env}
+      AMQP_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -26,6 +31,8 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_started
+      rabbitmq:
+        condition: service_healthy
     networks: [platform]
     healthcheck:
       test: ["CMD", "php", "-r", '$$r=@file_get_contents("http://127.0.0.1:8000/health/ready"); exit($$r === false ? 1 : 0);']
@@ -51,6 +58,27 @@ services:
       timeout: 3s
       retries: 10
       start_period: 5s
+
+  rabbitmq:
+    image: rabbitmq:4.1-management-alpine
+    container_name: enterprise-api-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-enterprise_api}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/}
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks: [platform]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.3.3
@@ -106,3 +134,4 @@ networks:
 volumes:
   postgres_data:
   keycloak_data:
+  rabbitmq_data:
