@@ -76,10 +76,33 @@ TOKEN_NO_SCOPE=$(get_token)
 TOKEN_READ=$(get_token "customers:read")
 TOKEN_WRITE=$(get_token "customers:write")
 
-echo
-echo "Checking authentication and scope-based authorization..."
+tamper_token_signature() {
+  local token="$1"
+  local header payload signature replacement
+  IFS='.' read -r header payload signature <<< "$token"
 
+  if [[ -z "$header" || -z "$payload" || -z "$signature" ]]; then
+    echo "Cannot tamper with a malformed JWT." >&2
+    return 1
+  fi
+
+  replacement="A"
+  if [[ "${signature:0:1}" == "$replacement" ]]; then
+    replacement="B"
+  fi
+
+  printf '%s.%s.%s' "$header" "$payload" "$replacement${signature:1}"
+}
+
+TOKEN_BAD_SIGNATURE=$(tamper_token_signature "$TOKEN_NO_SCOPE")
+
+echo
+echo "Checking JWT authentication and scope-based authorization..."
+
+expect_status "Health endpoint remains public" 200 GET "/health"
 expect_status "Missing token is rejected" 401 GET "/api/v1/customers"
+expect_status "Malformed JWT is rejected" 401 GET "/api/v1/customers" "not-a-jwt"
+expect_status "JWT with an invalid signature is rejected" 401 GET "/api/v1/customers" "$TOKEN_BAD_SIGNATURE"
 expect_status "Token without customers:read cannot list customers" 403 GET "/api/v1/customers" "$TOKEN_NO_SCOPE"
 expect_status "customers:read can list customers" 200 GET "/api/v1/customers" "$TOKEN_READ"
 
