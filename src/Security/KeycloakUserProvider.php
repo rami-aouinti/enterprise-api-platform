@@ -16,6 +16,8 @@ final class KeycloakUserProvider implements AttributesBasedUserProviderInterface
     private const array SUPPORTED_SCOPES = [
         'customers:read',
         'customers:write',
+        'apis:read',
+        'apis:write',
     ];
 
     /**

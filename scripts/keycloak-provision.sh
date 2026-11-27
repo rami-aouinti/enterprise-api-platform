@@ -84,6 +84,8 @@ ensure_optional_scope() {
 
 ensure_optional_scope customers:read
 ensure_optional_scope customers:write
+ensure_optional_scope apis:read
+ensure_optional_scope apis:write
 
 # Provision a second machine client with a valid audience but no api.read role.
 # Reuse the local-only secret so the negative authorization test needs no extra setup.
@@ -122,6 +124,6 @@ if ! printf '%s' "$NO_READ_MAPPERS" | grep -q '"name" : "enterprise-api-audience
     -s 'config."access.token.claim"=true'
 fi
 
-echo "Machine client provisioned with api.read role, realm roles mapper and optional customers:read/customers:write scopes."
+echo "Machine client provisioned with api.read role, realm roles mapper and optional customers:read/customers:write/apis:read/apis:write scopes."
 echo "Negative-test client enterprise-api-no-read provisioned without api.read and with the enterprise-api audience."
 REMOTE

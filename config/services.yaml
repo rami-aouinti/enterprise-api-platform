@@ -13,3 +13,7 @@ services:
     App\Customer\Application\CustomerRepository:
         alias: App\Customer\Infrastructure\DoctrineCustomerRepository
         public: true
+
+    App\ApiRegistry\Application\ApiRegistryRepository:
+        alias: App\ApiRegistry\Infrastructure\DoctrineApiRegistryRepository
+        public: true

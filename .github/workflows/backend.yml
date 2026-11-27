@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - 'src/**'
+      - 'services/**'
+      - 'docs/api/**'
+      - 'docs/development/**'
       - 'config/**'
       - 'public/**'
       - 'tests/**'
@@ -22,6 +25,9 @@ on:
     branches: [main]
     paths:
       - 'src/**'
+      - 'services/**'
+      - 'docs/api/**'
+      - 'docs/development/**'
       - 'config/**'
       - 'public/**'
       - 'tests/**'
@@ -148,22 +154,8 @@ jobs:
           wait_for_url http://localhost:8000/health/ready api
           wait_for_url http://localhost:8100/status kong
 
-      - name: Create isolated customer table for API security checks
-        run: |
-          docker compose exec -T database psql \
-            -v ON_ERROR_STOP=1 \
-            -U enterprise_api -d enterprise_api <<'SQL'
-          CREATE TABLE customers (
-              id UUID PRIMARY KEY,
-              first_name VARCHAR(100) NOT NULL,
-              last_name VARCHAR(100) NOT NULL,
-              email VARCHAR(255) NOT NULL UNIQUE,
-              phone VARCHAR(50),
-              status VARCHAR(30) NOT NULL DEFAULT 'active',
-              created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-          );
-          SQL
+      - name: Apply service database migrations
+        run: docker compose exec -T api php bin/console app:database:migrate
 
       - name: Provision Keycloak machine clients and OAuth2 scopes
         run: bash scripts/keycloak-provision.sh

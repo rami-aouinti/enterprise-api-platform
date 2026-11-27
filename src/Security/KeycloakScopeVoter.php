@@ -16,6 +16,8 @@ final class KeycloakScopeVoter extends Voter
     private const array SCOPE_ATTRIBUTES = [
         'SCOPE_CUSTOMERS_READ' => 'customers:read',
         'SCOPE_CUSTOMERS_WRITE' => 'customers:write',
+        'SCOPE_APIS_READ' => 'apis:read',
+        'SCOPE_APIS_WRITE' => 'apis:write',
     ];
 
     protected function supports(string $attribute, mixed $subject): bool

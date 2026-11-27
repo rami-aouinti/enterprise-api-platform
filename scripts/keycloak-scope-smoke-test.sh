@@ -75,6 +75,8 @@ echo "Requesting Keycloak client-credentials tokens..."
 TOKEN_NO_SCOPE=$(get_token)
 TOKEN_READ=$(get_token "customers:read")
 TOKEN_WRITE=$(get_token "customers:write")
+TOKEN_APIS_READ=$(get_token "apis:read")
+TOKEN_APIS_WRITE=$(get_token "apis:write")
 
 tamper_token_signature() {
   local token="$1"
@@ -112,6 +114,11 @@ expect_status "customers:write reaches create validation" 422 POST "/api/v1/cust
 CUSTOMER_ID="123e4567-e89b-42d3-a456-426614174000"
 expect_status "Read-only token cannot update customers" 403 PATCH "/api/v1/customers/$CUSTOMER_ID" "$TOKEN_READ" '{"status":"inactive"}'
 expect_status "customers:write reaches update lookup" 404 PATCH "/api/v1/customers/$CUSTOMER_ID" "$TOKEN_WRITE" '{"status":"inactive"}'
+
+expect_status "Token without apis:read cannot list the API registry" 403 GET "/api/v1/registry/apis" "$TOKEN_NO_SCOPE"
+expect_status "apis:read can list the API registry" 200 GET "/api/v1/registry/apis" "$TOKEN_APIS_READ"
+expect_status "Read-only API registry token cannot register an API" 403 POST "/api/v1/registry/apis" "$TOKEN_APIS_READ" '{}'
+expect_status "apis:write reaches API registry validation" 422 POST "/api/v1/registry/apis" "$TOKEN_APIS_WRITE" '{}'
 
 echo
 echo "Keycloak JWT authentication and OAuth2 scope authorization: OK"

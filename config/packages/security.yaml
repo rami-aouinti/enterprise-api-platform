@@ -15,6 +15,12 @@ security:
 
     access_control:
         - { path: ^/health(?:/|$), roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/registry/apis/?$, methods: [GET], roles: SCOPE_APIS_READ }
+        - { path: ^/api/v1/registry/apis/?$, methods: [POST], roles: SCOPE_APIS_WRITE }
+        - { path: ^/api/v1/registry/apis/[^/]+/versions/[^/]+/?$, methods: [GET], roles: SCOPE_APIS_READ }
+        - { path: ^/api/v1/registry/apis/[^/]+/versions/?$, methods: [POST], roles: SCOPE_APIS_WRITE }
+        - { path: ^/api/v1/registry/apis/[^/]+/?$, methods: [GET], roles: SCOPE_APIS_READ }
+        - { path: ^/api/v1/registry/apis/[^/]+/?$, methods: [PATCH], roles: SCOPE_APIS_WRITE }
         - { path: ^/api/v1/customers/?$, methods: [GET], roles: SCOPE_CUSTOMERS_READ }
         - { path: ^/api/v1/customers/?$, methods: [POST], roles: SCOPE_CUSTOMERS_WRITE }
         - { path: ^/api/v1/customers/[^/]+$, methods: [GET], roles: SCOPE_CUSTOMERS_READ }

@@ -1,0 +1,189 @@
+openapi: 3.1.0
+info:
+  title: Enterprise API Platform — API Registry
+  version: 1.0.0
+  description: Catalogue centralisé des API, de leurs propriétaires, états de cycle de vie et contrats OpenAPI versionnés.
+servers:
+  - url: /api/v1
+tags:
+  - name: API Registry
+    description: Découverte et gestion du catalogue d'API
+paths:
+  /registry/apis:
+    get:
+      tags: [API Registry]
+      operationId: listRegisteredApis
+      summary: Rechercher les API enregistrées
+      security: [{ bearerAuth: [apis:read] }]
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 200 } }
+        - { name: state, in: query, schema: { type: string, enum: [draft, published, deprecated] } }
+        - { name: tag, in: query, schema: { type: string, pattern: '^[a-z0-9][a-z0-9-]{0,39}$' } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        '200': { description: Catalogue paginé, content: { application/json: { schema: { type: object, required: [data, meta], properties: { data: { type: array, items: { $ref: '#/components/schemas/ApiRegistryEntry' } }, meta: { $ref: '#/components/schemas/Pagination' } } } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [API Registry]
+      operationId: registerApi
+      summary: Enregistrer une API
+      security: [{ bearerAuth: [apis:write] }]
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/ApiRegistryInput' } }
+      responses:
+        '201': { description: API enregistrée, content: { application/json: { schema: { $ref: '#/components/schemas/ApiRegistryEntry' } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /registry/apis/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [API Registry]
+      operationId: getRegisteredApi
+      summary: Consulter une API et ses versions
+      security: [{ bearerAuth: [apis:read] }]
+      responses:
+        '200': { description: Métadonnées et versions, content: { application/json: { schema: { $ref: '#/components/schemas/ApiRegistryEntry' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [API Registry]
+      operationId: updateRegisteredApi
+      summary: Modifier les métadonnées ou l'état
+      security: [{ bearerAuth: [apis:write] }]
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/ApiRegistryPatch' } }
+      responses:
+        '200': { description: Métadonnées mises à jour, content: { application/json: { schema: { $ref: '#/components/schemas/ApiRegistryEntry' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /registry/apis/{id}/versions:
+    post:
+      tags: [API Registry]
+      operationId: registerApiVersion
+      summary: Enregistrer un contrat OpenAPI versionné
+      security: [{ bearerAuth: [apis:write] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version, document]
+              properties:
+                version: { type: string, pattern: '^\d+\.\d+\.\d+' }
+                document: { $ref: '#/components/schemas/OpenApiDocument' }
+      responses:
+        '201': { description: Version enregistrée, content: { application/json: { schema: { $ref: '#/components/schemas/ApiVersion' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /registry/apis/{id}/versions/{version}:
+    get:
+      tags: [API Registry]
+      operationId: getApiVersion
+      summary: Récupérer le document OpenAPI d'une version
+      security: [{ bearerAuth: [apis:read] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: version, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Contrat OpenAPI demandé, content: { application/json: { schema: { $ref: '#/components/schemas/ApiVersion' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    ApiRegistryEntry:
+      type: object
+      required: [id, name, description, owner, tags, lifecycle_state, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid, readOnly: true }
+        name: { type: string, maxLength: 120 }
+        description: { type: string, maxLength: 2000 }
+        owner: { type: string, maxLength: 120 }
+        tags: { type: array, maxItems: 20, items: { type: string, pattern: '^[a-z0-9][a-z0-9-]{0,39}$' } }
+        lifecycle_state: { type: string, enum: [draft, published, deprecated] }
+        versions: { type: array, items: { $ref: '#/components/schemas/ApiVersionSummary' } }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ApiRegistryInput:
+      type: object
+      additionalProperties: false
+      required: [name, owner]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        description: { type: string, maxLength: 2000, default: '' }
+        owner: { type: string, minLength: 1, maxLength: 120 }
+        tags: { type: array, maxItems: 20, items: { type: string, pattern: '^[a-z0-9][a-z0-9-]{0,39}$' } }
+        lifecycle_state: { type: string, enum: [draft, published, deprecated], default: draft }
+    ApiRegistryPatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        description: { type: string, maxLength: 2000 }
+        owner: { type: string, minLength: 1, maxLength: 120 }
+        tags: { type: array, maxItems: 20, items: { type: string, pattern: '^[a-z0-9][a-z0-9-]{0,39}$' } }
+        lifecycle_state: { type: string, enum: [draft, published, deprecated] }
+    ApiVersionSummary:
+      type: object
+      required: [id, version, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: string }
+        created_at: { type: string, format: date-time }
+    ApiVersion:
+      allOf:
+        - { $ref: '#/components/schemas/ApiVersionSummary' }
+        - type: object
+          required: [api_id, document]
+          properties:
+            api_id: { type: string, format: uuid }
+            document: { $ref: '#/components/schemas/OpenApiDocument' }
+    OpenApiDocument:
+      type: object
+      required: [openapi, info, paths]
+      properties:
+        openapi: { type: string, pattern: '^3\.(0|1)\.\d+$' }
+        info:
+          type: object
+          required: [title, version]
+          properties:
+            title: { type: string, minLength: 1 }
+            version: { type: string }
+        paths: { type: object, additionalProperties: true }
+      additionalProperties: true
+    Pagination:
+      type: object
+      required: [page, per_page, total, total_pages]
+      properties:
+        page: { type: integer }
+        per_page: { type: integer }
+        total: { type: integer }
+        total_pages: { type: integer }
+    Problem:
+      type: object
+      required: [type, title, status, detail, instance]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        errors: { type: object, additionalProperties: { type: string } }
+  responses:
+    Problem: { description: Réponse RFC 9457, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
+    Unauthorized: { description: Jeton absent ou invalide }
+    Forbidden: { description: Scope OAuth2 insuffisant }
