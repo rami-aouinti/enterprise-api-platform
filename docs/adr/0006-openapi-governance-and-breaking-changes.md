@@ -12,7 +12,7 @@ Les contrats OpenAPI sont des interfaces publiques entre équipes et consommateu
 
 Utiliser Spectral 6.17.1 avec un ruleset versionné pour appliquer les conventions OpenAPI du dépôt. Les règles imposent notamment des métadonnées de contact, des descriptions, des operationId uniques en lower camelCase, des tags déclarés, une sécurité OAuth2 documentée, les réponses 401/403 et des chemins cohérents.
 
-Utiliser oasdiff 1.41.0 pour comparer les contrats modifiés avec leur version au commit de base. Une rupture certaine exige une augmentation majeure de info.version ; sans cette augmentation, la CI échoue. La suppression d'un contrat est bloquée et doit passer par une dépréciation et une migration majeure.
+Utiliser oasdiff 1.41.0 pour comparer les contrats modifiés avec leur version au commit de base. Toute rupture détectée fait échouer la CI par défaut. Un changement incompatible intentionnel exige une version majeure de info.version et une exception précise, approuvée et documentée ; la hausse de version seule ne désactive pas le contrôle. La suppression d'un contrat est bloquée et doit passer par une dépréciation et une migration majeure.
 
 Les exceptions sont rares, limitées à une opération et à un changement précis. Elles doivent inclure un ticket, un propriétaire, un reviewer, une date d'expiration et une justification. Le registre est versionné et vérifié par CI.
 

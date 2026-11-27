@@ -37,11 +37,11 @@ final class ApiGovernanceRulesetTest extends TestCase
         }
     }
 
-    public function testOasdiffRequiresMajorVersionBumpAndUsesTheExceptionRegister(): void
+    public function testOasdiffFailsOnBreakingChangesAndUsesTheExceptionRegister(): void
     {
         $config = Yaml::parseFile(dirname(__DIR__, 2) . '/.oasdiff.yaml');
 
-        self::assertSame('MISSING-VERSION-BUMP', $config['fail-on']);
+        self::assertSame('ERR', $config['fail-on']);
         self::assertSame('./docs/api/compatibility-exceptions.txt', $config['err-ignore']);
         self::assertFileExists(dirname(__DIR__, 2) . '/docs/api/compatibility-exceptions.txt');
     }

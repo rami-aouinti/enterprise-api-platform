@@ -15,4 +15,4 @@ bash scripts/check-openapi-contracts.sh origin/main
 
 For a local commit, pass its parent SHA or another base ref. A deleted contract is treated as breaking. Newly added contracts are linted, but have no previous version to compare.
 
-A breaking change requires a major semantic-version increase. An exception must be added to docs/api/compatibility-exceptions.txt with an issue, owner, reviewer, expiry and reason. Expired or malformed exceptions fail validation.
+A breaking change requires a major semantic-version increase and a narrow, reviewed exception entry. An exception must be added to docs/api/compatibility-exceptions.txt with an issue, owner, reviewer, expiry and reason. Expired or malformed exceptions fail validation.

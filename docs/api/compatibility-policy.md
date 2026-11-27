@@ -10,7 +10,7 @@ Every changed OpenAPI contract under docs/api is linted with the repository Spec
 - OAuth2 security on every operation, with documented 401 and 403 responses.
 - Valid path parameters, kebab-case path segments and semantic contract versions.
 
-The CI compatibility check compares each changed contract with its version at the base Git commit. A breaking change requires a major increase of info.version; without that increase, CI fails with a GitHub annotation. Deleting a contract is always rejected: deprecate it first and plan its removal through a major-version migration.
+The CI compatibility check compares each changed contract with its version at the base Git commit. Every detected breaking change fails CI by default with a GitHub annotation. An intentional breaking change must be released under a new major info.version and receive a narrow, reviewed exception in the register. A major bump alone does not bypass the check. Deleting a contract is always rejected: deprecate it first and plan its removal through a major-version migration.
 
 ## Breaking-change exceptions
 
