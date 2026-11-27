@@ -1,23 +1,15 @@
-# Local Development Prerequisites and Setup Policy
+# Local Development Setup
 
-The repository is currently in its documentation/foundation phase. This page records prerequisites and safe setup conventions; exact service commands will be added with the Docker Compose and Symfony implementation tickets.
+## Requirements
 
-## Required tools
 - Git 2.4x or newer.
-- Docker Engine or Docker Desktop with Docker Compose v2.
+- Docker Engine or Docker Desktop.
+- Docker Compose v2.
 - A terminal capable of running shell commands.
-- A GitHub account with access to this repository.
 
-## Recommended tools
-- Visual Studio Code or another IDE with PHP, Symfony, TypeScript, YAML, and Docker support.
-- PHP 8.4 and Composer 2 when running backend tooling directly on the host.
-- Node.js LTS and npm when running frontend tooling directly on the host.
-- Make, if a Makefile is introduced for common commands.
+Host-installed PHP, Composer, Node.js, and npm are optional. The project uses containers to keep the runtime consistent across developer machines.
 
-Docker is the default execution environment to reduce differences between host operating systems. Host-installed PHP/Node versions are optional when containers provide the required runtimes.
-
-## Verify prerequisites
-Run the following commands and confirm that each tool reports a version:
+Verify the required tools:
 
 ~~~bash
 git --version
@@ -25,27 +17,89 @@ docker --version
 docker compose version
 ~~~
 
-If developing outside containers, also verify:
+## First startup
+
+From the repository root:
 
 ~~~bash
-php --version
-composer --version
-node --version
-npm --version
+cp .env.example .env
 ~~~
 
-The exact required versions will be pinned in the implementation and CI configuration. Do not infer that the application is runnable before the runtime foundation phase is complete.
+Open `.env` and replace `POSTGRES_PASSWORD` with a private local password. Do not commit this file.
+
+Validate and start the stack:
+
+~~~bash
+docker compose config --quiet
+docker compose up -d --build
+docker compose ps
+~~~
+
+The stack contains:
+
+| Service | Container | Local endpoint | Purpose |
+|---|---|---|---|
+| API | enterprise-api | http://localhost:8000 | PHP API bootstrap |
+| PostgreSQL | enterprise-api-database | localhost:5432 | Persistent relational database |
+
+The API connects to PostgreSQL over the private Compose network using host `database` and port `5432`. Host ports are bound to loopback only.
+
+## Health checks
+
+~~~bash
+curl -i http://localhost:8000/health
+curl -i http://localhost:8000/health/ready
+docker compose ps
+~~~
+
+- `/health` confirms that the HTTP API process responds.
+- `/health/ready` confirms that the API can connect to PostgreSQL.
+- Compose waits for PostgreSQL's `pg_isready` health check before starting the API.
+
+Both HTTP endpoints should return status 200 when the stack is ready.
+
+## Logs and lifecycle
+
+~~~bash
+# All logs
+docker compose logs -f
+
+# API logs only
+docker compose logs -f api
+
+# Database logs only
+docker compose logs -f database
+
+# Stop containers; preserve database data
+docker compose down
+
+# Restart
+docker compose up -d
+~~~
+
+## Reset local data
+
+**Warning:** this permanently deletes the PostgreSQL volume and all data stored in it.
+
+~~~bash
+docker compose down -v
+docker compose up -d --build
+~~~
 
 ## Environment files and secrets
-- Commit safe examples such as .env.example with placeholder values only.
-- Keep real local values in ignored files such as .env.local or an untracked local secrets file.
+
+- Commit safe examples such as `.env.example` with placeholder values only.
+- Keep real local values in ignored `.env` or `.env.local` files.
 - Never commit passwords, tokens, private keys, certificates, production connection strings, or personal/customer data.
 - Prefer environment injection or a secrets manager over embedding credentials in Docker Compose files.
 - Rotate any credential that is accidentally exposed; removing it from the latest commit is not sufficient.
-- Do not paste secrets into GitHub issues, pull requests, logs, screenshots, or chat transcripts.
+- Use synthetic development data only. Never import production or real customer records.
 
-## Local data
-Use synthetic development data only. Do not import production or real customer records. Document reset and migration behavior when database services are introduced.
+## Troubleshooting
 
-## Next implementation
-Ticket #14 introduces Docker Compose and will replace this planning guidance with exact startup, health-check, reset, and troubleshooting commands.
+- If Compose reports that `POSTGRES_PASSWORD` is missing, copy `.env.example` to `.env` and set a local value.
+- If port 8000 or 5432 is already in use, stop the conflicting local service before starting Compose.
+- If the API remains unhealthy, inspect `docker compose logs api database`.
+- To recreate containers without deleting data, run `docker compose down` followed by `docker compose up -d --build`.
+
+The current API is a minimal PHP bootstrap for the infrastructure ticket. The Symfony application is introduced in the next backend implementation ticket.
