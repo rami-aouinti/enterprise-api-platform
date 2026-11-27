@@ -13,14 +13,14 @@ docker compose exec -T keycloak /bin/sh -ec '
     --password "$KC_BOOTSTRAP_ADMIN_PASSWORD"
 
   CLIENT_ID=$("$KC" get clients -r "$REALM" -q clientId=enterprise-api-machine \
-    | sed -n "s/.*\\"id\\"[[:space:]]*:[[:space:]]*\\"\\([^\\"]*\\)\\".*/\\1/p" | head -n 1)
+    | grep -m 1 '"'"'id'"'"' | cut -d '"' -f 4)
   test -n "$CLIENT_ID"
 
   "$KC" update "clients/$CLIENT_ID" -r "$REALM" \
     -s "secret=$KEYCLOAK_MACHINE_CLIENT_SECRET"
 
   SERVICE_ACCOUNT_USERNAME=$("$KC" get "clients/$CLIENT_ID/service-account-user" -r "$REALM" \
-    | sed -n "s/.*\\"username\\"[[:space:]]*:[[:space:]]*\\"\\([^\\"]*\\)\\".*/\\1/p" | head -n 1)
+    | grep -m 1 '"'"'username'"'"' | cut -d '"' -f 4)
   test -n "$SERVICE_ACCOUNT_USERNAME"
 
   "$KC" add-roles -r "$REALM" --uusername "$SERVICE_ACCOUNT_USERNAME" --rolename api.read

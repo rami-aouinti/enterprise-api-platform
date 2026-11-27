@@ -41,7 +41,7 @@ docker compose ps
 La stack contient Symfony 7.4 / PHP 8.4, PostgreSQL 17 et Keycloak 26.3.3.
 Les données PostgreSQL et Keycloak sont stockées dans des volumes persistants
 distincts. L'API se connecte à PostgreSQL via le réseau privé Compose. Keycloak
-est disponible sur `http://localhost:8081) ; ses identifiants administrateur
+est disponible sur `http://localhost:8081` ; ses identifiants administrateur
 locaux proviennent du fichier `.env` ignoré par Git.
 
 Provisionner le client machine confidentiel lorsque Keycloak est prêt :
