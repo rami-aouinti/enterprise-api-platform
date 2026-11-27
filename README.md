@@ -28,14 +28,13 @@ docker compose up -d --build
 docker compose ps
 ~~~
 
-Verify both API endpoints:
+Verify the API and database integration with the smoke-test script:
 
 ~~~bash
-curl -i http://localhost:8000/health
-curl -i http://localhost:8000/health/ready
+bash scripts/smoke-test.sh
 ~~~
 
-Expected responses are HTTP 200. The readiness endpoint confirms that the API can establish a PostgreSQL connection.
+The script checks HTTP 200 for liveness and readiness, verifies that readiness can connect to PostgreSQL, and confirms that unknown routes return HTTP 404. You can also inspect the endpoints directly with `curl -i http://localhost:8000/health` and `curl -i http://localhost:8000/health/ready`.
 
 Useful commands:
 
