@@ -78,5 +78,5 @@ rules:
     then:
       function: pattern
       functionOptions:
-        match: '^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?
+        match: '^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$'
 
