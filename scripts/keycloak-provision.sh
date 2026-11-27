@@ -57,7 +57,7 @@ find_client_scope_id() {
   # immediately preceding the exact scope name (no awk/jq dependency).
   "$KC" get client-scopes -r "$REALM" \
     | tr '\n' ' ' \
-    | sed -n "s/.*\\"id\\"[[:space:]]*:[[:space:]]*\\"\\([^\\"]*\\)\\".*\\"name\\"[[:space:]]*:[[:space:]]*\\"$SCOPE_NAME\\".*/\\1/p"
+    | sed -n "s/.*\"id\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*\"name\"[[:space:]]*:[[:space:]]*\"$SCOPE_NAME\".*/\\1/p"
 }
 
 ensure_optional_scope() {
