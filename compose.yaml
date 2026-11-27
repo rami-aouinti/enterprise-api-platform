@@ -10,6 +10,7 @@ services:
       APP_ENV: ${APP_ENV:-dev}
       APP_DEBUG: ${APP_DEBUG:-1}
       APP_SECRET: ${APP_SECRET:-local-dev-secret-change-before-deployment}
+      DEFAULT_URI: ${DEFAULT_URI:-http://localhost:8000}
       DB_HOST: database
       DB_PORT: 5432
       DB_NAME: ${POSTGRES_DB:-enterprise_api}
