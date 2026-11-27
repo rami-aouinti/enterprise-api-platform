@@ -1,37 +1,29 @@
 # ADR-0002 : Kong comme API Gateway
 
-- **Statut :** Proposé
+- **Statut :** Accepté pour le routage et les politiques de périphérie ; validation OIDC/JWT à finaliser
 - **Date :** 2026-11-27
-- **Ticket associé :** [#12](https://github.com/rami-aouinti/enterprise-api-platform/issues/12)
-
-## Contexte
-
-Les API publiées ont besoin d'un point d'entrée cohérent pour le routage, la terminaison TLS au niveau du déploiement, les limites de requêtes et les contrôles de sécurité en périphérie. Un accès public direct à chaque service dupliquerait les règles et augmenterait la surface d'attaque exposée.
+- **Ticket associé :** [#19](https://github.com/rami-aouinti/enterprise-api-platform/issues/19)
 
 ## Décision
 
-Utiliser Kong Gateway comme point d'entrée nord-sud des API. Garder la configuration de la gateway déclarative et versionnée dans Git. Kong gère le routage, les limites de requêtes en périphérie, l'intégration d'authentification configurée et la télémétrie de la gateway.
+Utiliser Kong Gateway Community Edition 3.9.1 en mode DB-less avec une configuration déclarative versionnée dans Git. Kong centralise le routage vers Customer API, les limites de débit, la taille maximale des corps, les timeouts upstream et les identifiants de corrélation.
 
-Les services métier restent responsables de la validation métier, de l'autorisation au niveau des ressources et des contrôles de propriété. Le passage par la gateway ne rend pas automatiquement une requête digne de confiance pour un service.
-
-La configuration locale initiale utilise l'édition open source et uniquement les capacités dont la disponibilité dans cette édition a été vérifiée. Toute intégration OIDC nécessitant un plugin payant ou un composant externe doit être évaluée avant adoption.
-
-## Alternatives étudiées
-
-1. Pas de gateway : plus simple, mais les politiques de périphérie deviennent incohérentes et l'exposition des services est plus difficile à maîtriser.
-2. Gateway Symfony personnalisée : flexible, mais reproduit des fonctionnalités déjà matures et crée une maintenance évitable.
-3. Traefik ou NGINX : options de routage viables, mais le modèle de plugins orientés API et la configuration déclarative de Kong correspondent mieux aux objectifs d'apprentissage.
+La validation des jetons Keycloak n'est pas activée dans cette première tranche. Le plugin JWT standard ne fournit pas à lui seul la découverte JWKS et la validation complète de l'audience Keycloak. Un plugin tiers évalué publie une matrice de compatibilité ancienne et ne couvre pas notre combinaison Kong 3.9.1 / Keycloak 26.3.3 ; il n'est donc pas retenu sans tests. Chaque API reste responsable de l'authentification, de l'autorisation métier et du contrôle d'accès aux ressources.
 
 ## Conséquences
 
-**Avantages :** routage et politiques de périphérie centralisés ; séparation claire entre responsabilités de la gateway et du domaine ; configuration comme code, vérifiable.
+**Avantages :** routage et politiques de périphérie centralisés ; configuration déclarative ; séparation entre responsabilités de la gateway et du domaine.
 
-**Inconvénients :** un composant supplémentaire à exploiter ; disponibilité des plugins variable selon l'édition ; risque de divergence entre politiques gateway et services sans tests communs.
+**Limites :** la validation OIDC/JWT à la gateway reste un critère ouvert ; les limites de débit locales ne sont pas distribuées entre plusieurs instances ; le mode local ne remplace pas une configuration de production avec TLS, secrets gérés et réseau privé.
 
 ## Sécurité et exploitation
 
-Appliquer des limites prudentes aux corps et en-têtes, des timeouts et des limites de débit. Ne jamais journaliser les en-têtes Authorization ni les payloads sensibles. Valider les en-têtes transférés et les paramètres des proxies de confiance. En environnement déployé, empêcher l'accès aux endpoints des services depuis des réseaux non fiables. Maintenir les contrôles de santé et les métriques de la gateway.
+- L'API d'administration Kong est liée à localhost et ne doit jamais être exposée publiquement.
+- Ne jamais journaliser les en-têtes Authorization ni les payloads sensibles.
+- Les services continuent à valider l'identité, les permissions et la propriété des ressources.
+- Les timeouts, la taille des corps et les limites de débit doivent être adaptés à la charge mesurée.
+- Ne pas exposer la gateway à un réseau non fiable avant l'activation et les tests du validateur OIDC/JWKS.
 
-## Critères de révision
+## Critère restant
 
-Revoir cette décision si les capacités OIDC nécessaires ne sont pas disponibles dans l'édition choisie, si la configuration de la gateway devient un goulot d'étranglement ou si un proxy plus simple satisfait les exigences avec moins de complexité.
+Démontrer automatiquement le rejet des signatures invalides, jetons expirés, mauvais issuer et mauvaise audience avec les versions de Keycloak et Kong réellement utilisées.
