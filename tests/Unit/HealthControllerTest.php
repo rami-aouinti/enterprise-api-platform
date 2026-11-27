@@ -20,7 +20,7 @@ final class HealthControllerTest extends TestCase
             ->with('SELECT 1')
             ->willReturn($this->createMock(Result::class));
 
-        $response = (new HealthController($connection))->ready();
+        $response = new HealthController($connection)->ready();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertJsonStringEqualsJsonString(
@@ -37,7 +37,7 @@ final class HealthControllerTest extends TestCase
             ->with('SELECT 1')
             ->willThrowException(new RuntimeException('Database unavailable'));
 
-        $response = (new HealthController($connection))->ready();
+        $response = new HealthController($connection)->ready();
 
         self::assertSame(503, $response->getStatusCode());
         self::assertJsonStringEqualsJsonString(
