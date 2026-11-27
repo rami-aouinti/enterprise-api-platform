@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Configure le client machine et lui attribue uniquement le rôle api.read.
+# Configure le client machine, son rôle api.read et les claims de rôles OIDC.
 docker compose exec -T keycloak /bin/sh -s <<'REMOTE'
 set -eu
 
@@ -31,5 +31,14 @@ test -n "$SERVICE_ACCOUNT_USERNAME"
   --uusername "$SERVICE_ACCOUNT_USERNAME" \
   --rolename api.read
 
-echo "Machine client provisioned with api.read role."
+# The persistent Keycloak volume may predate the current realm import.
+# Explicitly attach the built-in "roles" client scope so realm_access.roles
+# is emitted in access tokens even when the realm was not freshly imported.
+ROLES_SCOPE_ID=$("$KC" get client-scopes -r "$REALM" \
+  | awk '/"id" :/ { id=$3; gsub(/[",]/, "", id) } /"name" : "roles"/ { print id; exit }')
+test -n "$ROLES_SCOPE_ID"
+
+"$KC" update "clients/$CLIENT_ID/default-client-scopes/$ROLES_SCOPE_ID" -r "$REALM"
+
+echo "Machine client provisioned with api.read role and OIDC roles scope."
 REMOTE
