@@ -66,6 +66,18 @@ git commit -m "chore(deps): lock Symfony backend dependencies (#15)"
 git push origin main
 ~~~
 
+## Mise à jour du code après un `git pull`
+
+Le service API est construit dans une image Docker avec `COPY . .` et aucun bind mount du code source. Après avoir récupéré des modifications backend sur `main`, il faut donc reconstruire et recréer le conteneur API pour qu'il embarque les nouveaux fichiers :
+
+~~~bash
+git pull --ff-only origin main
+docker compose up -d --build api
+docker compose exec -T api php bin/console cache:clear
+~~~
+
+Un simple `docker compose restart api` ou `cache:clear` ne met pas à jour le code intégré à l'image.
+
 ## Commandes Docker utiles
 
 ~~~bash
