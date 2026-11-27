@@ -12,16 +12,6 @@ security:
             pattern: ^/
             stateless: true
             provider: keycloak_users
-            access_token:
-                token_handler:
-                    oidc:
-                        algorithms: ['RS256']
-                        audience: '%env(KEYCLOAK_AUDIENCE)%'
-                        issuers: ['%env(KEYCLOAK_ISSUER)%']
-                        discovery:
-                            base_uri: '%env(KEYCLOAK_DISCOVERY_BASE_URI)%'
-                            cache:
-                                id: cache.app
 
     access_control:
         - { path: ^/health(?:/|$), roles: PUBLIC_ACCESS }
