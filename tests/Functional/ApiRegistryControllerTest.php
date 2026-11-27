@@ -1,9 +1,13 @@
 <?php
+
 declare(strict_types=1);
+
 namespace App\Tests\Functional;
+
 use App\ApiRegistry\Application\ApiRegistryRepository;
 use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+
 final class ApiRegistryControllerTest extends WebTestCase
 {
     private const string API_ID = '123e4567-e89b-42d3-a456-426614174000';

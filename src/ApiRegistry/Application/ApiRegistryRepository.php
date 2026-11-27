@@ -1,6 +1,9 @@
 <?php
+
 declare(strict_types=1);
+
 namespace App\ApiRegistry\Application;
+
 interface ApiRegistryRepository
 {
     /** @return list<array<string, mixed>> */

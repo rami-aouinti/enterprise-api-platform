@@ -1,8 +1,12 @@
 <?php
+
 declare(strict_types=1);
+
 namespace App\Tests\Contract;
+
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
+
 final class ApiRegistryOpenApiContractTest extends TestCase
 {
     public function testApiRegistryContractDeclaresCatalogAndVersionOperations(): void

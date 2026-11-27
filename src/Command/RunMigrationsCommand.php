@@ -1,6 +1,9 @@
 <?php
+
 declare(strict_types=1);
+
 namespace App\Command;
+
 use Doctrine\DBAL\Connection;
 use RuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -9,10 +12,14 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
+
 #[AsCommand(name: 'app:database:migrate', description: 'Apply pending service SQL migrations.')]
 final class RunMigrationsCommand extends Command
 {
-    public function __construct(private readonly Connection $connection) { parent::__construct(); }
+    public function __construct(private readonly Connection $connection)
+    {
+        parent::__construct();
+    }
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
@@ -25,9 +32,13 @@ final class RunMigrationsCommand extends Command
             sort($files);
             foreach ($files as $file) {
                 $version = basename($file);
-                if ($this->connection->fetchOne('SELECT 1 FROM schema_migrations WHERE version = :version', ['version' => $version]) !== false) { continue; }
+                if ($this->connection->fetchOne('SELECT 1 FROM schema_migrations WHERE version = :version', ['version' => $version]) !== false) {
+                    continue;
+                }
                 $sql = file_get_contents($file);
-                if ($sql === false || trim($sql) === '') { throw new RuntimeException(sprintf('Migration "%s" is empty or unreadable.', $version)); }
+                if ($sql === false || trim($sql) === '') {
+                    throw new RuntimeException(sprintf('Migration "%s" is empty or unreadable.', $version));
+                }
                 $this->connection->beginTransaction();
                 try {
                     $this->connection->executeStatement($sql);
@@ -41,7 +52,9 @@ final class RunMigrationsCommand extends Command
                 $io->success(sprintf('Applied migration %s (%s)', $version, $directory));
             }
         }
-        if ($appliedFiles === 0) { $io->note('No pending service migrations found.'); }
+        if ($appliedFiles === 0) {
+            $io->note('No pending service migrations found.');
+        }
         $io->success('Database migrations are up to date.');
         return Command::SUCCESS;
     }

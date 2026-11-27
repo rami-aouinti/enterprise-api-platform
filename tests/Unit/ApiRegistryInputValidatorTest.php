@@ -1,8 +1,12 @@
 <?php
+
 declare(strict_types=1);
+
 namespace App\Tests\Unit;
+
 use App\ApiRegistry\Application\ApiRegistryInputValidator;
 use PHPUnit\Framework\TestCase;
+
 final class ApiRegistryInputValidatorTest extends TestCase
 {
     public function testApiMetadataIsNormalizedAndDefaultsAreApplied(): void
