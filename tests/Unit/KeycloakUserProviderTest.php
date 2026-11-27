@@ -70,6 +70,42 @@ final class KeycloakUserProviderTest extends TestCase
         );
     }
 
+    public function testScopeVoterGrantsWriteOnlyWhenWriteScopeIsPresent(): void
+    {
+        $user = new KeycloakUser('client-123', [], ['customers:write']);
+        $token = $this->createMock(TokenInterface::class);
+        $token->method('getUser')->willReturn($user);
+
+        $voter = new KeycloakScopeVoter();
+
+        self::assertSame(
+            VoterInterface::ACCESS_GRANTED,
+            $voter->vote($token, null, ['SCOPE_CUSTOMERS_WRITE']),
+        );
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($token, null, ['SCOPE_CUSTOMERS_READ']),
+        );
+    }
+
+    public function testScopeVoterDeniesAccessWhenUserHasNoSupportedScope(): void
+    {
+        $user = new KeycloakUser('client-123', [], []);
+        $token = $this->createMock(TokenInterface::class);
+        $token->method('getUser')->willReturn($user);
+
+        $voter = new KeycloakScopeVoter();
+
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($token, null, ['SCOPE_CUSTOMERS_READ']),
+        );
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($token, null, ['SCOPE_CUSTOMERS_WRITE']),
+        );
+    }
+
     public function testUnknownAndMalformedRealmRolesDoNotGrantApiAccess(): void
     {
         $user = new KeycloakUserProvider()->loadUserByIdentifier('user-456', [
