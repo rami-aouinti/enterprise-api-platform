@@ -27,7 +27,7 @@ services:
         - CMD
         - php
         - -r
-        - '$r=@file_get_contents("http://127.0.0.1:8000/health"); exit($r === false ? 1 : 0);'
+        - '$r=@file_get_contents("http://127.0.0.1:8000/health/ready"); exit($r === false ? 1 : 0);'
       interval: 10s
       timeout: 3s
       retries: 5
