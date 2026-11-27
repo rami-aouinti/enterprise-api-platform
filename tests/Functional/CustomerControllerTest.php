@@ -26,7 +26,7 @@ final class CustomerControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(201);
         self::assertResponseHeaderSame('location', '/api/v1/customers/' . self::CUSTOMER_ID);
-        self::assertJsonContains(['id' => self::CUSTOMER_ID, 'email' => 'ada@example.org']);
+        $this->assertJsonSubset(['id' => self::CUSTOMER_ID, 'email' => 'ada@example.org'], $client->getResponse()->getContent());
     }
 
     public function testListCustomersReturnsPaginatedCollection(): void
@@ -39,7 +39,10 @@ final class CustomerControllerTest extends WebTestCase
         $client->request('GET', '/api/v1/customers?page=1&per_page=10');
 
         self::assertResponseIsSuccessful();
-        self::assertJsonContains(['meta' => ['page' => 1, 'per_page' => 10, 'total' => 1, 'total_pages' => 1]]);
+        $this->assertJsonSubset(
+            ['meta' => ['page' => 1, 'per_page' => 10, 'total' => 1, 'total_pages' => 1]],
+            $client->getResponse()->getContent(),
+        );
     }
 
     public function testGetCustomerReturnsNotFoundProblemWhenMissing(): void
@@ -52,7 +55,7 @@ final class CustomerControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(404);
         self::assertResponseHeaderSame('content-type', 'application/problem+json');
-        self::assertJsonContains(['status' => 404, 'title' => 'Customer not found']);
+        $this->assertJsonSubset(['status' => 404, 'title' => 'Customer not found'], $client->getResponse()->getContent());
     }
 
     public function testInvalidCreatePayloadReturnsValidationProblem(): void
@@ -68,7 +71,7 @@ final class CustomerControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(422);
         self::assertResponseHeaderSame('content-type', 'application/problem+json');
-        self::assertJsonContains(['status' => 422, 'title' => 'Validation failed']);
+        $this->assertJsonSubset(['status' => 422, 'title' => 'Validation failed'], $client->getResponse()->getContent());
     }
 
     public function testPatchUpdatesOnlyProvidedFields(): void
@@ -84,7 +87,47 @@ final class CustomerControllerTest extends WebTestCase
         $client->jsonRequest('PATCH', '/api/v1/customers/' . self::CUSTOMER_ID, ['status' => 'inactive']);
 
         self::assertResponseIsSuccessful();
-        self::assertJsonContains(['status' => 'inactive']);
+        $this->assertJsonSubset(['status' => 'inactive'], $client->getResponse()->getContent());
+    }
+
+    /** @param array<string, mixed> $expected */
+    private function assertJsonSubset(array $expected, string|false $content): void
+    {
+        self::assertIsString($content);
+        $actual = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($actual);
+
+        foreach ($expected as $key => $value) {
+            self::assertArrayHasKey($key, $actual);
+
+            if (is_array($value)) {
+                self::assertIsArray($actual[$key]);
+                $this->assertJsonArraySubset($value, $actual[$key]);
+
+                continue;
+            }
+
+            self::assertSame($value, $actual[$key]);
+        }
+    }
+
+    /** @param array<string, mixed> $expected
+     *  @param array<string, mixed> $actual
+     */
+    private function assertJsonArraySubset(array $expected, array $actual): void
+    {
+        foreach ($expected as $key => $value) {
+            self::assertArrayHasKey($key, $actual);
+
+            if (is_array($value)) {
+                self::assertIsArray($actual[$key]);
+                $this->assertJsonArraySubset($value, $actual[$key]);
+
+                continue;
+            }
+
+            self::assertSame($value, $actual[$key]);
+        }
     }
 
     /** @return CustomerRepository&MockObject */

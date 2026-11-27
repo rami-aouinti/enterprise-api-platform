@@ -112,8 +112,8 @@ final readonly class DoctrineCustomerRepository implements CustomerRepository
             'email' => (string) $row['email'],
             'phone' => $row['phone'] === null ? null : (string) $row['phone'],
             'status' => (string) $row['status'],
-            'created_at' => (new DateTimeImmutable((string) $row['created_at']))->format(DATE_ATOM),
-            'updated_at' => (new DateTimeImmutable((string) $row['updated_at']))->format(DATE_ATOM),
+            'created_at' => new DateTimeImmutable((string) $row['created_at'])->format(DATE_ATOM),
+            'updated_at' => new DateTimeImmutable((string) $row['updated_at'])->format(DATE_ATOM),
         ];
     }
 

@@ -11,7 +11,7 @@ final class CustomerInputValidatorTest extends TestCase
 {
     public function testValidCreatePayloadIsNormalized(): void
     {
-        $result = (new CustomerInputValidator())->validate([
+        $result = new CustomerInputValidator()->validate([
             'first_name' => ' Ada ',
             'last_name' => ' Lovelace ',
             'email' => ' ADA.LOVELACE@EXAMPLE.ORG ',
@@ -27,7 +27,7 @@ final class CustomerInputValidatorTest extends TestCase
 
     public function testInvalidEmailAndUnknownFieldsAreRejected(): void
     {
-        $result = (new CustomerInputValidator())->validate([
+        $result = new CustomerInputValidator()->validate([
             'first_name' => 'Ada',
             'last_name' => 'Lovelace',
             'email' => 'not-an-email',
@@ -40,14 +40,14 @@ final class CustomerInputValidatorTest extends TestCase
 
     public function testPatchRequiresAtLeastOneField(): void
     {
-        $result = (new CustomerInputValidator())->validate([], true);
+        $result = new CustomerInputValidator()->validate([], true);
 
         self::assertArrayHasKey('_payload', $result['errors']);
     }
 
     public function testPatchValidatesOnlyProvidedFields(): void
     {
-        $result = (new CustomerInputValidator())->validate(['status' => 'inactive'], true);
+        $result = new CustomerInputValidator()->validate(['status' => 'inactive'], true);
 
         self::assertSame([], $result['errors']);
         self::assertSame(['status' => 'inactive'], $result['data']);
