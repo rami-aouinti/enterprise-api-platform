@@ -4,4 +4,3 @@ security:
     firewalls:
         main:
             security: false
-    access_control: []
