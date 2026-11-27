@@ -50,19 +50,39 @@ fi
 
 # Provision a second machine client with a valid audience but no api.read role.
 # Reuse the local-only secret so the negative authorization test needs no extra setup.
-NO_READ_CLIENT_ID=$("$KC" get clients -r "$REALM" -q clientId=enterprise-api-no-read   | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'   | head -n 1)
+NO_READ_CLIENT_ID=$("$KC" get clients -r "$REALM" -q clientId=enterprise-api-no-read \
+  | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+  | head -n 1)
 
 if [ -z "$NO_READ_CLIENT_ID" ]; then
-  "$KC" create clients -r "$REALM"     -s clientId=enterprise-api-no-read     -s name="Enterprise API No-Read Test Client"     -s enabled=true     -s protocol=openid-connect     -s publicClient=false     -s serviceAccountsEnabled=true     -s standardFlowEnabled=false     -s directAccessGrantsEnabled=false     -s "secret=$KEYCLOAK_MACHINE_CLIENT_SECRET"
-  NO_READ_CLIENT_ID=$("$KC" get clients -r "$REALM" -q clientId=enterprise-api-no-read     | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'     | head -n 1)
+  "$KC" create clients -r "$REALM" \
+    -s clientId=enterprise-api-no-read \
+    -s name="Enterprise API No-Read Test Client" \
+    -s enabled=true \
+    -s protocol=openid-connect \
+    -s publicClient=false \
+    -s serviceAccountsEnabled=true \
+    -s standardFlowEnabled=false \
+    -s directAccessGrantsEnabled=false \
+    -s "secret=$KEYCLOAK_MACHINE_CLIENT_SECRET"
+  NO_READ_CLIENT_ID=$("$KC" get clients -r "$REALM" -q clientId=enterprise-api-no-read \
+    | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+    | head -n 1)
 fi
 test -n "$NO_READ_CLIENT_ID"
 
-"$KC" update "clients/$NO_READ_CLIENT_ID" -r "$REALM"   -s "secret=$KEYCLOAK_MACHINE_CLIENT_SECRET"
+"$KC" update "clients/$NO_READ_CLIENT_ID" -r "$REALM" \
+  -s "secret=$KEYCLOAK_MACHINE_CLIENT_SECRET"
 
 NO_READ_MAPPERS=$("$KC" get "clients/$NO_READ_CLIENT_ID/protocol-mappers/models" -r "$REALM")
 if ! printf '%s' "$NO_READ_MAPPERS" | grep -q '"name" : "enterprise-api-audience"'; then
-  "$KC" create "clients/$NO_READ_CLIENT_ID/protocol-mappers/models" -r "$REALM"     -s name=enterprise-api-audience     -s protocol=openid-connect     -s protocolMapper=oidc-audience-mapper     -s 'config."included.client.audience"=enterprise-api'     -s 'config."id.token.claim"=false'     -s 'config."access.token.claim"=true'
+  "$KC" create "clients/$NO_READ_CLIENT_ID/protocol-mappers/models" -r "$REALM" \
+    -s name=enterprise-api-audience \
+    -s protocol=openid-connect \
+    -s protocolMapper=oidc-audience-mapper \
+    -s 'config."included.client.audience"=enterprise-api' \
+    -s 'config."id.token.claim"=false' \
+    -s 'config."access.token.claim"=true'
 fi
 
 echo "Machine client provisioned with api.read role and realm_access.roles client mapper."
