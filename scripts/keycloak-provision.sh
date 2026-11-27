@@ -48,6 +48,36 @@ if ! printf '%s' "$MAPPERS" | grep -q '"name" : "enterprise-api-realm-roles"'; t
     -s 'config."userinfo.token.claim"=true'
 fi
 
+
+# Create the two optional OAuth2 client scopes and grant them to the trusted
+# machine client. A client must explicitly request a scope when obtaining a token.
+ensure_optional_scope() {
+  SCOPE_NAME="$1"
+  SCOPE_ID=$("$KC" get client-scopes -r "$REALM" -q "name=$SCOPE_NAME" \
+    | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' \
+    | head -n 1)
+
+  if [ -z "$SCOPE_ID" ]; then
+    "$KC" create client-scopes -r "$REALM" \
+      -s "name=$SCOPE_NAME" \
+      -s protocol=openid-connect \
+      -s 'attributes."include.in.token.scope"=true' \
+      -s 'attributes."display.on.consent.screen"=false'
+    SCOPE_ID=$("$KC" get client-scopes -r "$REALM" -q "name=$SCOPE_NAME" \
+      | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' \
+      | head -n 1)
+  fi
+  test -n "$SCOPE_ID"
+
+  ASSIGNED_SCOPES=$("$KC" get "clients/$CLIENT_ID/optional-client-scopes" -r "$REALM")
+  if ! printf '%s' "$ASSIGNED_SCOPES" | grep -q "$SCOPE_ID"; then
+    "$KC" update "clients/$CLIENT_ID/optional-client-scopes/$SCOPE_ID" -r "$REALM"
+  fi
+}
+
+ensure_optional_scope customers:read
+ensure_optional_scope customers:write
+
 # Provision a second machine client with a valid audience but no api.read role.
 # Reuse the local-only secret so the negative authorization test needs no extra setup.
 NO_READ_CLIENT_ID=$("$KC" get clients -r "$REALM" -q clientId=enterprise-api-no-read \
@@ -85,6 +115,6 @@ if ! printf '%s' "$NO_READ_MAPPERS" | grep -q '"name" : "enterprise-api-audience
     -s 'config."access.token.claim"=true'
 fi
 
-echo "Machine client provisioned with api.read role and realm_access.roles client mapper."
+echo "Machine client provisioned with api.read role, realm roles mapper and optional customers:read/customers:write scopes."
 echo "Negative-test client enterprise-api-no-read provisioned without api.read and with the enterprise-api audience."
 REMOTE

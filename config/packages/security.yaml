@@ -25,7 +25,7 @@ security:
 
     access_control:
         - { path: ^/health(?:/|$), roles: PUBLIC_ACCESS }
-        - { path: ^/api/v1/customers/?$, methods: [GET], roles: ROLE_API_READ }
-        - { path: ^/api/v1/customers/?$, methods: [POST], roles: ROLE_API_WRITE }
-        - { path: ^/api/v1/customers/[^/]+$, methods: [GET], roles: ROLE_API_READ }
-        - { path: ^/api/v1/customers/[^/]+$, methods: [PATCH], roles: ROLE_API_WRITE }
+        - { path: ^/api/v1/customers/?$, methods: [GET], roles: SCOPE_CUSTOMERS_READ }
+        - { path: ^/api/v1/customers/?$, methods: [POST], roles: SCOPE_CUSTOMERS_WRITE }
+        - { path: ^/api/v1/customers/[^/]+$, methods: [GET], roles: SCOPE_CUSTOMERS_READ }
+        - { path: ^/api/v1/customers/[^/]+$, methods: [PATCH], roles: SCOPE_CUSTOMERS_WRITE }

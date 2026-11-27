@@ -67,6 +67,24 @@
           }
         }
       ]
+    },
+    {
+      "name": "customers:read",
+      "description": "Read customer resources from the Enterprise API",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
+    },
+    {
+      "name": "customers:write",
+      "description": "Create and update customer resources in the Enterprise API",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
     }
   ],
   "clients": [
@@ -127,6 +145,10 @@
       "defaultClientScopes": [
         "roles",
         "enterprise-api-audience"
+      ],
+      "optionalClientScopes": [
+        "customers:read",
+        "customers:write"
       ]
     }
   ],

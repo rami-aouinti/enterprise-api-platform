@@ -158,6 +158,70 @@ Le client machine reçoit `api.read` : la lecture doit être autorisée, tandis
 qu'une création doit répondre `403`. Pour tester `api.write`, utiliser un
 utilisateur ou client auquel ce rôle a été attribué explicitement.
 
+
+## Scopes OAuth2 pour la Customer API
+
+Les rôles Keycloak et les scopes OAuth2 sont deux mécanismes distincts dans ce
+projet. Les rôles décrivent les attributions d'une identité ; les scopes
+décrivent les autorisations OAuth2 accordées au client pour un accès donné.
+
+Deux scopes optionnels sont déclarés dans le realm :
+
+| Scope | Accès |
+|---|---|
+| `customers:read` | Consulter la liste et le détail des clients |
+| `customers:write` | Créer et modifier les clients |
+
+Le client confidentiel `enterprise-api-machine` est autorisé à demander ces
+scopes. Le client de test `enterprise-api-no-read` ne les reçoit pas. Un scope
+optionnel n'est pas accordé automatiquement : le client doit le demander et
+Keycloak doit l'autoriser.
+
+Demander un token de lecture :
+
+~~~bash
+TOKEN_RESPONSE=$(curl --fail --silent --show-error --request POST \
+  http://localhost:8081/realms/enterprise-platform/protocol/openid-connect/token \
+  --header 'Content-Type: application/x-www-form-urlencoded' \
+  --data-urlencode 'grant_type=client_credentials' \
+  --data-urlencode 'client_id=enterprise-api-machine' \
+  --data-urlencode "client_secret=$KEYCLOAK_MACHINE_CLIENT_SECRET" \
+  --data-urlencode 'scope=customers:read')
+
+ACCESS_TOKEN=$(printf '%s' "$TOKEN_RESPONSE" | jq -r '.access_token')
+~~~
+
+Pour demander les deux scopes, utiliser
+`--data-urlencode 'scope=customers:read customers:write'`. Le claim JWT
+`scope` contient les scopes effectivement accordés, sous forme d'une chaîne
+séparée par des espaces.
+
+Symfony lit ce claim dans `KeycloakUserProvider`. Le
+`KeycloakScopeVoter` vérifie ensuite `customers:read` ou
+`customers:write` via les attributs de sécurité
+`SCOPE_CUSTOMERS_READ` et `SCOPE_CUSTOMERS_WRITE`. Les routes Customer API
+sont protégées par ces scopes, et non par les anciens rôles `api.read` et
+`api.write`. Les rôles restent dans le token pour illustrer la différence,
+mais ne suffisent plus à autoriser ces routes.
+
+Après mise à jour du dépôt, réexécuter le provisionnement (il est conçu pour
+être relancé) :
+
+~~~bash
+bash scripts/keycloak-provision.sh
+~~~
+
+Tester le token :
+
+~~~bash
+curl -i http://localhost:8001/api/v1/customers \
+  --header "Authorization: Bearer $ACCESS_TOKEN"
+~~~
+
+Un token sans `customers:read` doit recevoir `403 Forbidden`, même si son
+client possède encore l'ancien rôle `api.read`. Cela permet de vérifier que
+l'autorisation est réellement basée sur le scope.
+
 ## Authorization Code avec PKCE (client public navigateur)
 
 Le client `enterprise-portal` est public et ne possède aucun secret client.

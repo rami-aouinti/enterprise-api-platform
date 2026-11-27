@@ -10,10 +10,12 @@ final readonly class KeycloakUser implements UserInterface
 {
     /**
      * @param list<string> $roles
+     * @param list<string> $scopes
      */
     public function __construct(
         private string $identifier,
         private array $roles,
+        private array $scopes = [],
     ) {
     }
 
@@ -28,6 +30,19 @@ final readonly class KeycloakUser implements UserInterface
     public function getRoles(): array
     {
         return array_values(array_unique(['ROLE_USER', ...$this->roles]));
+    }
+
+    public function hasScope(string $scope): bool
+    {
+        return in_array($scope, $this->scopes, true);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function getScopes(): array
+    {
+        return $this->scopes;
     }
 
     public function eraseCredentials(): void

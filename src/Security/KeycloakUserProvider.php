@@ -10,6 +10,11 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 final class KeycloakUserProvider implements AttributesBasedUserProviderInterface
 {
+    private const array SUPPORTED_SCOPES = [
+        'customers:read',
+        'customers:write',
+    ];
+
     public function loadUserByIdentifier(string $identifier, array $attributes = []): UserInterface
     {
         $realmRoles = $attributes['realm_access']['roles'] ?? [];
@@ -40,7 +45,23 @@ final class KeycloakUserProvider implements AttributesBasedUserProviderInterface
             $roles[] = 'ROLE_API_WRITE';
         }
 
-        return new KeycloakUser($identifier, array_values(array_unique($roles)));
+        // OAuth 2.0 represents the granted scopes as a space-delimited claim.
+        // Only known application scopes are exposed to the authorization layer.
+        $scopeClaim = $attributes['scope'] ?? '';
+        $requestedScopes = is_string($scopeClaim)
+            ? preg_split('/\s+/', trim($scopeClaim), -1, PREG_SPLIT_NO_EMPTY)
+            : [];
+
+        $scopes = array_values(array_intersect(
+            self::SUPPORTED_SCOPES,
+            is_array($requestedScopes) ? $requestedScopes : [],
+        ));
+
+        return new KeycloakUser(
+            $identifier,
+            array_values(array_unique($roles)),
+            $scopes,
+        );
     }
 
     public function refreshUser(UserInterface $user): UserInterface
