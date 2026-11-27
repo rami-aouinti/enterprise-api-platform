@@ -35,7 +35,7 @@ test -n "$SERVICE_ACCOUNT_USERNAME"
 # Explicitly attach the built-in "roles" client scope so realm_access.roles
 # is emitted in access tokens even when the realm was not freshly imported.
 ROLES_SCOPE_ID=$("$KC" get client-scopes -r "$REALM" -q name=roles \
-  | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' \
+  | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
   | head -n 1)
 test -n "$ROLES_SCOPE_ID"
 
