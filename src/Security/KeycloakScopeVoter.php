@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Security;
 
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 final class KeycloakScopeVoter extends Voter
@@ -19,8 +20,12 @@ final class KeycloakScopeVoter extends Voter
         return isset(self::SCOPE_ATTRIBUTES[$attribute]);
     }
 
-    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
-    {
+    protected function voteOnAttribute(
+        string $attribute,
+        mixed $subject,
+        TokenInterface $token,
+        ?Vote $vote = null,
+    ): bool {
         $user = $token->getUser();
 
         if (!$user instanceof KeycloakUser) {
