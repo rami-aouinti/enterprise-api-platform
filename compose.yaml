@@ -22,7 +22,7 @@ services:
       AMQP_HOST: rabbitmq
       AMQP_PORT: 5672
       AMQP_USER: ${RABBITMQ_DEFAULT_USER:-enterprise_api}
-      AMQP_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env}
+      AMQP_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-local-rabbitmq-password-change-me}
       AMQP_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/}
     ports:
       - "127.0.0.1:8000:8000"
@@ -65,7 +65,7 @@ services:
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-enterprise_api}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-local-rabbitmq-password-change-me}
       RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/}
     ports:
       - "127.0.0.1:5672:5672"
