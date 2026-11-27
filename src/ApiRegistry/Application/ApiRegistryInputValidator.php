@@ -80,7 +80,10 @@ final class ApiRegistryInputValidator
         }
         return ['data' => $data, 'errors' => $errors];
     }
-    /** @param array<string, mixed> $input @return array{data: array{version: string, document: array<string, mixed>}, errors: array<string, string>} */
+    /**
+     * @param array<string, mixed> $input
+     * @return array{data: array{version: string, document: array<string, mixed>}, errors: array<string, string>}
+     */
     public function validateVersion(array $input): array
     {
         $errors = [];
