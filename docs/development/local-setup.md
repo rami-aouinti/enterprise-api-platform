@@ -6,6 +6,7 @@
 - Docker Engine or Docker Desktop.
 - Docker Compose v2.
 - A terminal capable of running shell commands.
+- `curl`, `jq`, and `openssl` for identity-flow smoke tests.
 
 Host-installed PHP and Composer are optional; the API container provides PHP 8.4 and Composer.
 
@@ -25,7 +26,9 @@ From the repository root:
 cp .env.example .env
 ~~~
 
-Set a private local `POSTGRES_PASSWORD` and a long random `APP_SECRET` in `.env`. Do not commit this file.
+Set private local values for `POSTGRES_PASSWORD`, `APP_SECRET`,
+`KEYCLOAK_ADMIN_PASSWORD`, and `KEYCLOAK_MACHINE_CLIENT_SECRET` in `.env`.
+Use long random values and do not commit this file.
 
 Validate and start:
 
@@ -35,20 +38,38 @@ docker compose up -d --build
 docker compose ps
 ~~~
 
-The stack contains Symfony 7.4 / PHP 8.4 and PostgreSQL 17. PostgreSQL data is stored in the persistent `postgres_data` volume. The API connects to the database through the private Compose network using host `database` and port `5432`.
+The stack contains Symfony 7.4 / PHP 8.4, PostgreSQL 17, and Keycloak 26.3.3.
+PostgreSQL and Keycloak data are stored in separate persistent volumes. The API
+connects to PostgreSQL through the private Compose network. Keycloak is
+available at `http://localhost:8081`; its local admin credentials come from
+the ignored `.env` file.
+
+Provision the confidential machine client after Keycloak is ready:
+
+~~~bash
+curl --fail http://localhost:8081/health/ready
+sh scripts/keycloak-provision.sh
+~~~
+
+See [Keycloak identity flows](../security/keycloak-identity.md) for the PKCE
+browser flow, Client Credentials flow, JWT claims, JWKS validation, and key
+rotation procedure.
 
 ## Health checks
 
 ~~~bash
 curl -i http://localhost:8000/health
 curl -i http://localhost:8000/health/ready
+curl --fail http://localhost:8081/health/ready
 bash scripts/smoke-test.sh
+sh scripts/keycloak-token-smoke-test.sh
 docker compose ps
 ~~~
 
 - `/health` confirms that the Symfony HTTP application responds.
 - `/health/ready` executes a lightweight database query and returns HTTP 503 if PostgreSQL is unavailable.
-- Compose waits for PostgreSQL's `pg_isready` health check before starting the API.
+- Keycloak's `/health/ready` endpoint confirms that the identity provider is ready.
+- The token smoke test validates discovery and obtains a machine access token.
 
 ## Backend commands
 
@@ -81,8 +102,9 @@ git push origin main
 docker compose logs -f
 docker compose logs -f api
 docker compose logs -f database
+docker compose logs -f keycloak
 
-# Stop containers but preserve database data
+# Stop containers but preserve database and identity data
 docker compose down
 
 # Restart
@@ -91,7 +113,7 @@ docker compose up -d
 
 ## Reset local data
 
-**Warning:** this permanently deletes the PostgreSQL volume and all data stored in it.
+**Warning:** this permanently deletes the PostgreSQL and Keycloak volumes and all data stored in them.
 
 ~~~bash
 docker compose down -v
@@ -109,8 +131,9 @@ docker compose up -d --build
 
 ## Troubleshooting
 
-- If Compose reports that `POSTGRES_PASSWORD` is missing, copy `.env.example` to `.env` and set a local value.
+- If Compose reports a missing variable, copy `.env.example` to `.env` and set all required local values.
 - If the API container fails to build, inspect `docker compose build --no-cache api` output.
 - If the API remains unhealthy, inspect `docker compose logs api database`.
-- If port 8000 or 5432 is already in use, stop the conflicting local service.
+- If Keycloak does not become ready, inspect `docker compose logs keycloak` and verify ports 8081 and 9000 are available.
+- If port 8000, 5432, or 8081 is already in use, stop the conflicting local service.
 - To recreate containers without deleting data, run `docker compose down` followed by `docker compose up -d --build`.

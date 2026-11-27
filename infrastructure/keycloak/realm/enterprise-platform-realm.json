@@ -1,0 +1,106 @@
+{
+  "realm": "enterprise-platform",
+  "displayName": "Enterprise API Platform (local)",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 28800,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "roles": {
+    "realm": [
+      { "name": "platform-admin", "description": "Local platform administration" },
+      { "name": "portal-user", "description": "Can sign in to the developer portal" },
+      { "name": "api.read", "description": "Read access to protected platform APIs" },
+      { "name": "api.write", "description": "Write access to protected platform APIs" }
+    ]
+  },
+  "clientScopes": [
+    {
+      "name": "enterprise-api-audience",
+      "description": "Adds the Enterprise API resource server to access-token audience",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "enterprise-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "enterprise-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "enterprise-portal",
+      "name": "Enterprise Developer Portal",
+      "description": "Public browser-based client; Authorization Code with PKCE S256",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:5173/*"],
+      "webOrigins": ["http://localhost:5173"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*"
+      },
+      "defaultClientScopes": ["web-origins", "acr", "profile", "email", "roles", "enterprise-api-audience"]
+    },
+    {
+      "clientId": "enterprise-api",
+      "name": "Enterprise API Resource Server",
+      "description": "API audience identifier; does not issue interactive tokens",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "bearerOnly": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false
+    },
+    {
+      "clientId": "enterprise-api-machine",
+      "name": "Enterprise API Machine Client",
+      "description": "Confidential service client; secret is injected locally after realm import",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "defaultClientScopes": ["service_account", "roles", "enterprise-api-audience"]
+    }
+  ],
+  "users": [
+    {
+      "username": "portal-demo",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Portal",
+      "lastName": "Demo",
+      "credentials": [
+        { "type": "password", "value": "local-demo-only", "temporary": false }
+      ],
+      "realmRoles": ["portal-user", "api.read"]
+    }
+  ]
+}

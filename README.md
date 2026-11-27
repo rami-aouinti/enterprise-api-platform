@@ -8,6 +8,10 @@ A production-minded learning project demonstrating enterprise API management, AP
 
 - Symfony 7.4 / PHP 8.4 customer API.
 - PostgreSQL 17 with persistent Docker volume.
+- Keycloak 26.3.3 with a reproducible local `enterprise-platform` realm.
+- OIDC Authorization Code + PKCE for the public portal client.
+- OAuth 2.0 Client Credentials for the confidential machine client.
+- Realm roles, API audience, five-minute access tokens, and JWKS rotation guidance.
 - Docker Compose local runtime and container health checks.
 - Liveness endpoint: `GET /health`.
 - Readiness endpoint: `GET /health/ready` (executes `SELECT 1` against PostgreSQL).
@@ -21,21 +25,24 @@ Requirements: Git, Docker Engine/Desktop, Docker Compose v2.
 
 ~~~bash
 cp .env.example .env
-# Set private values for POSTGRES_PASSWORD and APP_SECRET in .env.
+# Replace every placeholder in .env with private local values.
 docker compose config --quiet
 docker compose up -d --build
 docker compose ps
+curl --fail http://localhost:8081/health/ready
+sh scripts/keycloak-provision.sh
+sh scripts/keycloak-token-smoke-test.sh
 ~~~
 
-Verify the endpoints:
+See [Keycloak identity flows](docs/security/keycloak-identity.md) for PKCE, Client Credentials, token validation, and key rotation.
+
+Verify the API endpoints:
 
 ~~~bash
 curl -i http://localhost:8000/health
 curl -i http://localhost:8000/health/ready
 bash scripts/smoke-test.sh
 ~~~
-
-The endpoints should return HTTP 200 when the API and database are ready.
 
 ## Backend quality commands
 
@@ -65,18 +72,19 @@ git push origin main
 docker compose logs -f
 docker compose logs -f api
 docker compose logs -f database
+docker compose logs -f keycloak
 docker compose down
 docker compose up -d
 ~~~
 
-**Destructive reset:** this deletes the PostgreSQL volume and all local database data.
+**Destructive reset:** this deletes the PostgreSQL and Keycloak volumes and all local data.
 
 ~~~bash
 docker compose down -v
 docker compose up -d --build
 ~~~
 
-The API is exposed on 127.0.0.1:8000 and PostgreSQL on 127.0.0.1:5432. The database is reachable from the API container at database:5432. Use synthetic data only.
+The API is exposed on 127.0.0.1:8000, PostgreSQL on 127.0.0.1:5432, and Keycloak on 127.0.0.1:8081. The database is reachable from the API container at database:5432. Use synthetic data only.
 
 ## Planned technology baseline
 
@@ -103,7 +111,7 @@ This is a practical reference architecture, not a vendor requirement. Versions a
 React Developer/Admin Portal → Kong Gateway → Symfony domain APIs
 
 Supporting capabilities:
-- Keycloak provides identity and token issuance.
+- Keycloak provides human and machine identity and OAuth2/OIDC token issuance.
 - PostgreSQL stores service-owned transactional data.
 - RabbitMQ handles task-oriented asynchronous messaging.
 - Kafka carries durable domain event streams where replay or multiple consumers matter.
@@ -120,7 +128,9 @@ See [Architecture](docs/architecture/overview.md), [Technology decisions](docs/a
 - [Local Setup](docs/development/local-setup.md)
 - [Repository Structure](docs/development/repository-structure.md)
 - [Architecture Overview](docs/architecture/overview.md)
-- [Technology Decisions](docs/architecture/technology-decisions.md)
+- [Service Boundaries](docs/architecture/service-boundaries.md)
+- [Keycloak Identity Flows](docs/security/keycloak-identity.md)
+- [Technology decisions](docs/architecture/technology-decisions.md)
 - [Architecture Decision Records](docs/adr/README.md)
 - [API Governance](docs/api-governance/standards.md)
 - [Security Threat Model](docs/security/threat-model.md)
@@ -148,8 +158,8 @@ We work directly on `main` for this repository. Do not create branches or pull r
 ├── packages/shared-contracts/
 ├── infrastructure/
 │   ├── docker/
-│   ├── kong/
 │   ├── keycloak/
+│   ├── kong/
 │   ├── observability/
 │   └── kubernetes/
 └── docs/
@@ -159,7 +169,7 @@ The structure is a target, not a claim that every listed service already exists.
 
 ## Status
 
-**Phase 01 — Runtime foundation:** Docker Compose and the Symfony backend bootstrap are committed. The next steps introduce domain APIs, gateway, identity, messaging, integration runtime, portal, and observability.
+**Phase 01 — Runtime foundation:** Docker Compose and the Symfony backend bootstrap are committed. Phase 02 defines the initial domain boundaries and Customer API. Phase 03 introduces identity and gateway enforcement.
 
 ## Learning outcomes
 
