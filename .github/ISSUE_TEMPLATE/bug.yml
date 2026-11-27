@@ -1,30 +1,30 @@
-name: Bug report
-description: Report a reproducible defect
+name: Signalement de bug
+description: Signaler un défaut reproductible
 title: "[BUG] "
 labels: []
 body:
   - type: textarea
     id: observed
     attributes:
-      label: Observed behavior
+      label: Comportement observé
     validations:
       required: true
   - type: textarea
     id: expected
     attributes:
-      label: Expected behavior
+      label: Comportement attendu
     validations:
       required: true
   - type: textarea
     id: reproduce
     attributes:
-      label: Steps to reproduce
+      label: Étapes pour reproduire le problème
     validations:
       required: true
   - type: textarea
     id: environment
     attributes:
-      label: Environment and logs
-      description: Remove tokens, credentials, and personal data.
+      label: Environnement et journaux
+      description: Supprimez les jetons, identifiants et données personnelles.
     validations:
       required: true

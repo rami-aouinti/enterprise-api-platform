@@ -1,26 +1,26 @@
-name: Feature
-description: Propose a user-visible or architectural capability
+name: Fonctionnalité
+description: Proposer une capacité visible par l'utilisateur ou une évolution architecturale
 title: "[FEATURE] "
 labels: []
 body:
   - type: textarea
     id: outcome
     attributes:
-      label: Problem and expected outcome
-      description: Who needs this and what should improve?
+      label: Problème et résultat attendu
+      description: Qui en a besoin et qu'est-ce qui doit être amélioré ?
     validations:
       required: true
   - type: textarea
     id: scope
     attributes:
-      label: Scope and non-goals
+      label: Périmètre et éléments hors périmètre
     validations:
       required: true
   - type: textarea
     id: acceptance
     attributes:
-      label: Acceptance criteria
-      description: Use verifiable checkboxes.
+      label: Critères d'acceptation
+      description: Utilisez des cases à cocher vérifiables.
       value: |
         - [ ] 
     validations:
@@ -28,12 +28,12 @@ body:
   - type: textarea
     id: tests
     attributes:
-      label: Test strategy
+      label: Stratégie de test
     validations:
       required: true
   - type: textarea
     id: docs
     attributes:
-      label: Documentation and operational impact
+      label: Documentation et impact opérationnel
     validations:
       required: true

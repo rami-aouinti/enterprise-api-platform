@@ -1,40 +1,39 @@
-## Summary
+## Résumé
 
-Describe the change and the problem it solves.
+Décrire le changement et le problème qu'il résout.
 
-## Related issue
+## Ticket associé
 
 Closes #
 
-## Type of change
+## Type de changement
 
-- [ ] Feature
-- [ ] Bug fix
+- [ ] Fonctionnalité
+- [ ] Correction de bug
 - [ ] Documentation
-- [ ] Refactoring
+- [ ] Refactorisation
 - [ ] Infrastructure / CI
 
-## Design
+## Conception
 
-- Main design decisions:
-- Alternatives considered:
-- Security implications:
-- Operational impact:
+- Principales décisions de conception :
+- Alternatives étudiées :
+- Implications en matière de sécurité :
+- Impact opérationnel :
 
-## Verification
+## Vérification
 
-- [ ] Unit tests
-- [ ] Integration / contract tests
-- [ ] Static analysis / lint
-- [ ] Docker/local verification
-- [ ] Documentation updated
-- [ ] No secrets or sensitive data added
+- [ ] Tests unitaires
+- [ ] Tests d'intégration / de contrat
+- [ ] Analyse statique / linting
+- [ ] Vérification Docker / environnement local
+- [ ] Documentation mise à jour
+- [ ] Aucun secret ni donnée sensible ajouté
 
-Commands and results:
+Commandes exécutées et résultats :
 
-## API / data compatibility
+## Compatibilité API / données
 
-Describe contract changes, migrations, compatibility, and rollback considerations.
+Décrire les changements de contrat, migrations, compatibilité et possibilités de retour arrière.
 
-## Screenshots (if applicable)
-
+## Captures d'écran (si nécessaire)
