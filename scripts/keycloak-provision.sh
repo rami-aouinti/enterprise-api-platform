@@ -51,26 +51,30 @@ fi
 
 # Create the two optional OAuth2 client scopes and grant them to the trusted
 # machine client. A client must explicitly request a scope when obtaining a token.
+find_client_scope_id() {
+  SCOPE_NAME="$1"
+  "$KC" get client-scopes -r "$REALM" \
+    | awk -v name="$SCOPE_NAME" 'BEGIN { RS="{" } index($0, "\"name\" : \"" name "\"") { if (match($0, /"id" : "[^"]+"/)) { value=substr($0, RSTART, RLENGTH); sub(/^[^"]*"id" : "/, "", value); gsub(/"/, "", value); print value; exit } }'
+}
+
 ensure_optional_scope() {
   SCOPE_NAME="$1"
-  SCOPE_ID=$("$KC" get client-scopes -r "$REALM" -q "name=$SCOPE_NAME" \
-    | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
-    | head -n 1)
+  SCOPE_ID=$(find_client_scope_id "$SCOPE_NAME")
 
   if [ -z "$SCOPE_ID" ]; then
+    echo "Creating missing Keycloak client scope: $SCOPE_NAME"
     "$KC" create client-scopes -r "$REALM" \
       -s "name=$SCOPE_NAME" \
       -s protocol=openid-connect \
       -s 'attributes."include.in.token.scope"=true' \
       -s 'attributes."display.on.consent.screen"=false'
-    SCOPE_ID=$("$KC" get client-scopes -r "$REALM" -q "name=$SCOPE_NAME" \
-      | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
-      | head -n 1)
+    SCOPE_ID=$(find_client_scope_id "$SCOPE_NAME")
   fi
   test -n "$SCOPE_ID"
 
   ASSIGNED_SCOPES=$("$KC" get "clients/$CLIENT_ID/optional-client-scopes" -r "$REALM")
   if ! printf '%s' "$ASSIGNED_SCOPES" | grep -q "$SCOPE_ID"; then
+    echo "Assigning optional scope $SCOPE_NAME to enterprise-api-machine"
     "$KC" update "clients/$CLIENT_ID/optional-client-scopes/$SCOPE_ID" -r "$REALM"
   fi
 }
