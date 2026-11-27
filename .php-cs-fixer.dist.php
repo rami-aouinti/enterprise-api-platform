@@ -6,6 +6,7 @@ $finder = PhpCsFixer\Finder::create()
 
 return (new PhpCsFixer\Config())
     ->setRiskyAllowed(true)
+    ->setLineEnding("\n")
     ->setRules([
         '@PER-CS' => true,
         '@PHP84Migration' => true,
