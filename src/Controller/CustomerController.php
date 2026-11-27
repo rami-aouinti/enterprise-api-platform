@@ -67,7 +67,7 @@ final readonly class CustomerController
         return new JsonResponse($customer, JsonResponse::HTTP_CREATED, ['Location' => sprintf('/api/v1/customers/%s', $customer['id'])]);
     }
 
-    #[Route('/{id}', name: 'show', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['GET'])]
+    #[Route('/{id}', name: 'show', requirements: ['id' => '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'], methods: ['GET'])]
     public function show(Request $request, string $id): JsonResponse
     {
         $customer = $this->customers->find($id);
