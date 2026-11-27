@@ -50,7 +50,14 @@ docker compose exec api composer analyse
 docker compose exec api composer cs:check
 ~~~
 
-The CI workflow resolves dependencies, validates Composer configuration, and runs style, static-analysis, and PHPUnit checks. A generated `composer.lock` should be committed after the first dependency resolution so local builds and CI use the same exact dependency versions.
+The first dependency resolution creates `composer.lock` inside the container. Copy it to the repository and commit it so local builds and CI use the same exact dependency versions:
+
+~~~bash
+docker compose cp api:/app/composer.lock ./composer.lock
+git add composer.lock
+git commit -m "chore(deps): lock Symfony backend dependencies (#15)"
+git push origin main
+~~~
 
 ## Useful Docker commands
 
