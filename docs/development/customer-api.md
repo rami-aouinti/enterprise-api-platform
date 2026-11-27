@@ -1,34 +1,34 @@
-# Customer Service API
+# API Customer Service
 
-The Customer Service is the first domain API in the platform. It is implemented in the Symfony application and exposed under /api/v1.
+Customer Service est la première API métier de la plateforme. Elle est implémentée dans l'application Symfony et exposée sous `/api/v1`.
 
-## Resource model
+## Modèle de ressource
 
-A customer contains a UUID, first and last name, unique email address, optional phone number, lifecycle status (active or inactive), and UTC creation/update timestamps. Email addresses are trimmed and normalized to lowercase. The database enforces uniqueness.
+Un client contient un UUID, un prénom, un nom, une adresse e-mail unique, un numéro de téléphone facultatif, un statut de cycle de vie (`active` ou `inactive`) et des horodatages UTC de création/mise à jour. Les adresses e-mail sont nettoyées des espaces superflus et normalisées en minuscules. La base de données garantit l'unicité.
 
 ## Endpoints
 
-| Method | Path | Purpose | Success |
-| --- | --- | --- | --- |
-| GET | /api/v1/customers | List customers | 200 |
-| POST | /api/v1/customers | Create a customer | 201 |
-| GET | /api/v1/customers/{id} | Retrieve a customer | 200 |
-| PATCH | /api/v1/customers/{id} | Partially update a customer | 200 |
+| Méthode | Chemin | Objectif | Succès |
+|---|---|---|---|
+| GET | /api/v1/customers | Lister les clients | 200 |
+| POST | /api/v1/customers | Créer un client | 201 |
+| GET | /api/v1/customers/{id} | Récupérer un client | 200 |
+| PATCH | /api/v1/customers/{id} | Modifier partiellement un client | 200 |
 
-Collection pagination uses page (one-based) and per_page (1–100, default 20). The response contains data and a meta object with page, page size, total records, and total pages.
+La pagination de la collection utilise `page` (à partir de 1) et `per_page` (1–100, valeur par défaut 20). La réponse contient `data` et un objet `meta` avec la page, la taille de page, le nombre total d'enregistrements et le nombre total de pages.
 
-## Error behavior
+## Comportement en erreur
 
-Errors use application/problem+json and the RFC 9457 Problem Details shape. Validation failures return 422 with an errors object. Malformed JSON returns 400, unsupported media types return 415, duplicate email addresses return 409, and missing customers return 404. Internal database details are not returned.
+Les erreurs utilisent `application/problem+json` et la structure Problem Details de la RFC 9457. Les erreurs de validation renvoient 422 avec un objet `errors`. Un JSON mal formé renvoie 400, un type de média non pris en charge 415, un e-mail en doublon 409 et un client inexistant 404. Les détails internes de la base ne sont pas renvoyés.
 
-## Database setup
+## Configuration de la base de données
 
-Apply SQL migrations from the API container with:
+Appliquer les migrations SQL depuis le conteneur API avec :
 
     docker compose exec api php bin/console app:database:migrate
 
-The migration runner records applied files in schema_migrations and applies each migration transactionally.
+Le moteur de migration enregistre les fichiers appliqués dans `schema_migrations` et exécute chaque migration dans une transaction.
 
-## OpenAPI contract
+## Contrat OpenAPI
 
-The contract-first API description is maintained at docs/api/customer-service.openapi.yaml (OpenAPI 3.1). Update the contract and implementation together. The automated contract test verifies the required resource operations and core schemas.
+La description contract-first de l'API est maintenue dans `docs/api/customer-service.openapi.yaml` (OpenAPI 3.1). Mettre à jour le contrat et l'implémentation ensemble. Le test de contrat automatisé vérifie les opérations requises de la ressource et les schémas principaux.

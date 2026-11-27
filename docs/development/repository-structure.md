@@ -1,6 +1,6 @@
-# Repository Structure
+# Structure du dépôt
 
-The following is the intended structure. Directories will be created when their owning implementation tickets begin; this document does not claim that every component exists today.
+L'arborescence suivante représente la structure cible. Les répertoires seront créés lorsque les tickets d'implémentation responsables commenceront ; ce document ne prétend pas que tous les composants existent déjà.
 
 ~~~text
 .
@@ -35,12 +35,13 @@ The following is the intended structure. Directories will be created when their 
     └── PULL_REQUEST_TEMPLATE.md
 ~~~
 
-## Ownership guidance
-- apps/: user-facing portal, gateway configuration, and integration runtime applications.
-- services/: independently owned business capabilities and their APIs.
-- packages/: reusable technical code and published contracts only; avoid a shared domain model.
-- infrastructure/: local orchestration, gateway/identity configuration, observability, and later deployment manifests.
-- docs/: architecture, decisions, API governance, security, operations, development, and roadmap material.
-- .github/: issue and pull request templates plus automated workflows.
+## Règles de propriété
 
-Each service should own its business rules, persistence boundary, tests, and operational documentation. Cross-service communication must use published APIs or messages, not another service's private database tables.
+- `apps/` : portail utilisateur, configuration de la gateway et applications du moteur d'intégration.
+- `services/` : capacités métier indépendantes et leurs API.
+- `packages/` : code technique réutilisable et contrats publiés uniquement ; éviter un modèle métier partagé.
+- `infrastructure/` : orchestration locale, configuration gateway/identité, observabilité et futurs manifests de déploiement.
+- `docs/` : architecture, décisions, gouvernance API, sécurité, exploitation, développement et feuille de route.
+- `.github/` : modèles de tickets et de pull requests ainsi que workflows automatisés.
+
+Chaque service doit posséder ses règles métier, sa frontière de persistance, ses tests et sa documentation opérationnelle. La communication interservices doit utiliser des API ou messages publiés, jamais les tables privées de base de données d'un autre service.

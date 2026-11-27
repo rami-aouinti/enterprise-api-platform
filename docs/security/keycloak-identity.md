@@ -1,40 +1,40 @@
-# Keycloak identity and token flows
+# Keycloak : identité et flux de jetons
 
-## Local identity provider
+## Fournisseur d'identité local
 
-Docker Compose starts Keycloak at `http://localhost:8081` and imports the
-`enterprise-platform` realm from
+Docker Compose démarre Keycloak sur `http://localhost:8081` et importe le
+realm `enterprise-platform` depuis
 `infrastructure/keycloak/realm/enterprise-platform-realm.json`.
 
-The local realm provisions:
+Le realm local configure :
 
-| Component | Purpose |
+| Composant | Objectif |
 |---|---|
-| `enterprise-portal` | Public React/browser client using Authorization Code + PKCE (S256) |
-| `enterprise-api` | Resource-server audience identifier |
-| `enterprise-api-machine` | Confidential machine-to-machine client using Client Credentials |
-| `portal-demo` | Synthetic interactive test user |
-| `portal-user`, `api.read`, `api.write`, `platform-admin` | Realm roles |
-| `enterprise-api-audience` | Adds `enterprise-api` to access-token audience |
+| `enterprise-portal` | Client public React/navigateur utilisant Authorization Code + PKCE (S256) |
+| `enterprise-api` | Identifiant d'audience du serveur de ressources |
+| `enterprise-api-machine` | Client machine-à-machine confidentiel utilisant Client Credentials |
+| `portal-demo` | Utilisateur synthétique pour les tests interactifs |
+| `portal-user`, `api.read`, `api.write`, `platform-admin` | Rôles du realm |
+| `enterprise-api-audience` | Ajoute `enterprise-api` à l'audience du jeton d'accès |
 
-The local-only demo user's password is `local-demo-only`. Never reuse it outside
-this disposable development realm.
+Le mot de passe de l'utilisateur de démonstration local est `local-demo-only`.
+Ne jamais le réutiliser en dehors de ce realm de développement jetable.
 
-## Start and provision
+## Démarrage et provisionnement
 
-Create a private local environment file and replace every placeholder:
+Créer un fichier d'environnement local privé et remplacer toutes les valeurs fictives :
 
 ~~~bash
 cp .env.example .env
 ~~~
 
-Use shell-safe random values for the three passwords/secrets. For example:
+Utiliser des valeurs aléatoires compatibles avec le shell pour les trois mots de passe/secrets. Exemple :
 
 ~~~bash
 openssl rand -hex 32
 ~~~
 
-Start the platform and wait for Keycloak:
+Démarrer la plateforme et attendre que Keycloak soit prêt :
 
 ~~~bash
 docker compose config --quiet
@@ -43,25 +43,28 @@ docker compose ps
 curl --fail http://localhost:8081/health/ready
 ~~~
 
-Apply the machine-client secret from the ignored `.env` file and grant its
-service account the least-privilege `api.read` role:
+Appliquer le secret du client machine depuis le fichier `.env` ignoré par Git
+et attribuer à son compte de service le rôle `api.read`, selon le principe du
+moindre privilège :
 
 ~~~bash
 sh scripts/keycloak-provision.sh
 ~~~
 
-The confidential client secret is supplied to the container at runtime. It is
-not stored in the realm export, source code, or browser assets. Retrieve or
-rotate it through the local secret configuration and rerun provisioning.
+Le secret du client confidentiel est fourni au conteneur à l'exécution. Il
+n'est stocké ni dans l'export du realm, ni dans le code source, ni dans les
+ressources du navigateur. Pour le récupérer ou le faire tourner, utiliser la
+configuration locale des secrets puis relancer le provisionnement.
 
-## Authorization Code with PKCE (public browser client)
+## Authorization Code avec PKCE (client public navigateur)
 
-The portal client is public: it has no client secret. It has Standard Flow
-enabled, Direct Access Grants and Implicit Flow disabled, and requires PKCE
-with the S256 challenge method. Its local callback allow-list is
+Le client du portail est public : il ne possède aucun secret client. Le
+Standard Flow est activé, tandis que Direct Access Grants et Implicit Flow
+sont désactivés. PKCE avec la méthode de challenge S256 est obligatoire.
+La liste locale des callbacks autorisés est
 `http://localhost:5173/*`.
 
-Generate a verifier and S256 challenge:
+Générer un verifier et un challenge S256 :
 
 ~~~bash
 CODE_VERIFIER=$(openssl rand -base64 64 | tr -d '=+/\n' | cut -c1-64)
@@ -70,16 +73,17 @@ echo "$CODE_VERIFIER"
 echo "$CODE_CHALLENGE"
 ~~~
 
-Open this authorization URL in a browser, replacing
-`URL_ENCODED_CHALLENGE` with the generated challenge:
+Ouvrir cette URL d'autorisation dans un navigateur en remplaçant
+`URL_ENCODED_CHALLENGE` par le challenge généré :
 
 ~~~text
 http://localhost:8081/realms/enterprise-platform/protocol/openid-connect/auth?client_id=enterprise-portal&response_type=code&scope=openid%20profile%20email&redirect_uri=http%3A%2F%2Flocalhost%3A5173%2Fauth%2Fcallback&code_challenge=URL_ENCODED_CHALLENGE&code_challenge_method=S256
 ~~~
 
-Sign in as `portal-demo` with the local-only password. The browser redirects
-to the callback with a short-lived authorization code. Exchange that code from
-the client application, using the original verifier:
+Se connecter avec `portal-demo` et le mot de passe réservé au développement.
+Le navigateur redirige ensuite vers le callback avec un code d'autorisation
+de courte durée. Échanger ce code depuis l'application cliente en utilisant
+le verifier initial :
 
 ~~~bash
 curl --fail --request POST \
@@ -92,25 +96,26 @@ curl --fail --request POST \
   --data-urlencode "code_verifier=$CODE_VERIFIER"
 ~~~
 
-The redirect URI must exactly match the URI used in the authorization request.
-The verifier stays in the browser application's transient session storage;
-only the S256 challenge is sent through the authorization request. Do not put
-a client secret in a React environment variable or compiled asset.
+L'URI de redirection doit correspondre exactement à celle utilisée dans la
+requête d'autorisation. Le verifier reste dans le stockage de session
+temporaire de l'application navigateur ; seul le challenge S256 est envoyé
+dans la requête d'autorisation. Ne jamais placer un secret client dans une
+variable d'environnement React ni dans les fichiers compilés.
 
-## Client Credentials (machine identity)
+## Client Credentials (identité machine)
 
-After provisioning, run the local smoke test:
+Après le provisionnement, exécuter le test rapide local :
 
 ~~~bash
 sh scripts/keycloak-token-smoke-test.sh
 ~~~
 
-It obtains an access token for `enterprise-api-machine` without a user session
-and prints selected claims (not the token or client secret). The service
-account is assigned `api.read`; do not grant broad administrative roles to
-machine clients by default.
+Ce script obtient un jeton d'accès pour `enterprise-api-machine` sans session
+utilisateur et affiche certains claims (jamais le jeton ni le secret client).
+Le compte de service reçoit `api.read` ; ne pas attribuer par défaut de rôles
+administratifs étendus aux clients machine.
 
-Equivalent token request:
+Requête équivalente pour obtenir le jeton :
 
 ~~~bash
 curl --fail --request POST \
@@ -121,68 +126,66 @@ curl --fail --request POST \
   --data-urlencode "client_secret=$KEYCLOAK_MACHINE_CLIENT_SECRET"
 ~~~
 
-## Discovery, issuer, audience, and JWT validation
+## Discovery, issuer, audience et validation JWT
 
-Realm discovery document:
+Document de découverte du realm :
 
 - `http://localhost:8081/realms/enterprise-platform/.well-known/openid-configuration`
 
-Expected issuer:
+Issuer attendu :
 
 - `http://localhost:8081/realms/enterprise-platform`
 
-JWKS endpoint is published as the discovery document's `jwks_uri`, normally:
+L'endpoint JWKS est publié dans le champ `jwks_uri` du document de découverte. Il est normalement :
 
 - `http://localhost:8081/realms/enterprise-platform/protocol/openid-connect/certs`
 
-Every API/resource server must validate an access token before trusting its
-claims:
+Chaque API/serveur de ressources doit valider un jeton d'accès avant de faire
+confiance à ses claims :
 
-1. Verify the signature using a trusted public key from the issuer's JWKS.
-2. Allow only the configured asymmetric signing algorithm (do not accept
-   `none` or choose an algorithm from an untrusted token header).
-3. Require an exact issuer match.
-4. Require the expected audience `enterprise-api`; a valid signature alone
-   is not sufficient.
-5. Enforce `exp`, `nbf` when present, and a small bounded clock skew.
-6. Apply application authorization using roles/scopes after authentication.
-7. Reject ID tokens when an API access token is required.
+1. Vérifier la signature avec une clé publique de confiance provenant du JWKS de l'issuer.
+2. Autoriser uniquement l'algorithme de signature asymétrique configuré (ne pas accepter `none` ni choisir un algorithme à partir d'un en-tête de jeton non fiable).
+3. Exiger une correspondance exacte de l'issuer.
+4. Exiger l'audience attendue `enterprise-api` ; une signature valide ne suffit pas.
+5. Vérifier `exp`, `nbf` lorsqu'il est présent et appliquer une tolérance d'horloge réduite et bornée.
+6. Appliquer l'autorisation applicative avec les rôles/scopes après l'authentification.
+7. Rejeter les ID tokens lorsqu'un jeton d'accès API est attendu.
 
-The realm's access-token lifetime is five minutes. Refresh tokens are rotated
-(`revokeRefreshToken=true`, `refreshTokenMaxReuse=0`) for interactive
-sessions. Machine clients should request a new access token when needed rather
-than retaining long-lived tokens.
+La durée de vie des jetons d'accès du realm est de cinq minutes. Les refresh
+tokens sont renouvelés par rotation (`revokeRefreshToken=true`,
+`refreshTokenMaxReuse=0`) pour les sessions interactives. Les clients machine
+doivent demander un nouveau jeton d'accès lorsque nécessaire plutôt que de
+conserver des jetons de longue durée.
 
-The current ticket provisions the identity provider and demonstrates both
-grant flows. It does not yet add a Symfony JWT authenticator or protect the
-Customer API routes; API/gateway enforcement and authorization are handled in
-the later security/gateway work.
+Ce ticket provisionne le fournisseur d'identité et démontre les deux flux
+OAuth2. Il n'ajoute pas encore d'authenticator JWT Symfony ni de protection
+des routes Customer API ; l'application des règles au niveau API/gateway et
+l'autorisation sont traitées dans les travaux ultérieurs de sécurité/gateway.
 
-## Signing-key rotation and JWKS caching
+## Rotation des clés de signature et cache JWKS
 
-Keycloak publishes active public signing keys through JWKS. Resource servers
-must cache keys for a bounded period, select the key by JWT header `kid`, and
-refresh JWKS once when an unknown `kid` is encountered. They must not pin one
-public key indefinitely.
+Keycloak publie les clés publiques de signature actives via JWKS. Les serveurs
+de ressources doivent mettre ces clés en cache pour une durée limitée,
+sélectionner la clé à partir du `kid` de l'en-tête JWT et actualiser JWKS une
+fois lorsqu'un `kid` inconnu est rencontré. Ils ne doivent pas épingler une
+seule clé publique indéfiniment.
 
-For a controlled rotation:
+Pour une rotation contrôlée :
 
-1. Add/generate a new active realm signing key in **Realm settings → Keys**.
-2. Keep the previous key available during the overlap period so already-issued
-   tokens remain verifiable.
-3. Confirm discovery/JWKS exposes the new key and verify a newly issued token
-   with its `kid`.
-4. Wait at least the maximum access-token lifetime plus clock-skew allowance.
-5. Retire the old key only after tokens signed by it can no longer be valid.
+1. Ajouter/générer une nouvelle clé de signature active dans **Realm settings → Keys**.
+2. Conserver l'ancienne clé pendant la période de chevauchement afin que les jetons déjà émis restent vérifiables.
+3. Confirmer que discovery/JWKS expose la nouvelle clé et vérifier un nouveau jeton avec son `kid`.
+4. Attendre au moins la durée de vie maximale des jetons d'accès, augmentée de la tolérance d'horloge.
+5. Retirer l'ancienne clé uniquement lorsque les jetons signés avec celle-ci ne peuvent plus être valides.
 
-Monitor issuer/JWKS availability and never log access tokens, refresh tokens,
-authorization codes, or client secrets.
+Surveiller la disponibilité de l'issuer/JWKS et ne jamais journaliser les
+jetons d'accès, refresh tokens, codes d'autorisation ou secrets client.
 
-## Local reset and troubleshooting
+## Réinitialisation locale et dépannage
 
-Realm import happens when the realm is first created. If you intentionally
-need to re-import a changed realm definition, back up anything important and
-remove only the Keycloak volume:
+L'import du realm a lieu lors de sa première création. Si une nouvelle
+définition du realm doit volontairement être importée, sauvegarder d'abord
+toute donnée importante et supprimer uniquement le volume Keycloak :
 
 ~~~bash
 docker compose down
@@ -190,11 +193,10 @@ docker volume rm enterprise-api-platform_keycloak_data
 docker compose up -d keycloak
 ~~~
 
-This deletes local Keycloak users, sessions, and realm data. It does not remove
-the PostgreSQL volume.
+Cette opération supprime les utilisateurs, sessions et données du realm
+Keycloak locaux. Elle ne supprime pas le volume PostgreSQL.
 
-- Read logs: `docker compose logs -f keycloak`.
-- Check readiness: `curl -i http://localhost:8081/health/ready`.
-- If a secret changes in `.env`, rerun `sh scripts/keycloak-provision.sh`.
-- If the browser receives `invalid_redirect_uri`, compare the callback with
-  the exact redirect URI registered on `enterprise-portal`.
+- Consulter les journaux : `docker compose logs -f keycloak`.
+- Vérifier la disponibilité : `curl -i http://localhost:8081/health/ready`.
+- Si un secret change dans `.env`, relancer `sh scripts/keycloak-provision.sh`.
+- Si le navigateur reçoit `invalid_redirect_uri`, comparer le callback avec l'URI exacte enregistrée sur `enterprise-portal`.

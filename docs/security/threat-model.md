@@ -1,61 +1,61 @@
-# Security Threat Model
+# Modèle de menaces de sécurité
 
-## Scope
+## Périmètre
 
-The initial threat model covers external consumers, the API Gateway, Keycloak, Symfony services, message brokers, connector credentials, integration payloads, and operational telemetry.
+Le modèle de menaces initial couvre les consommateurs externes, l'API Gateway, Keycloak, les services Symfony, les brokers de messages, les identifiants des connecteurs, les payloads d'intégration et la télémétrie opérationnelle.
 
-## Assets
+## Actifs à protéger
 
-- User and machine identities
-- OAuth2 access and refresh tokens
-- API keys and connector credentials
-- Customer/policy/claim sample data
-- API contracts and configuration
-- Message payloads and integration execution history
-- Signing keys, database credentials, and infrastructure secrets
+- Identités humaines et machines.
+- Jetons d'accès et de renouvellement OAuth2.
+- Clés API et identifiants des connecteurs.
+- Données d'exemple clients/contrats/sinistres.
+- Contrats API et configuration.
+- Payloads de messages et historique des exécutions d'intégration.
+- Clés de signature, identifiants de base de données et secrets d'infrastructure.
 
-## Trust boundaries
+## Frontières de confiance
 
-1. Internet/client to gateway
-2. Gateway to internal service
-3. Service to identity provider
-4. Service to database
-5. Service to broker and broker consumers
-6. Integration runtime to third-party connector
-7. Operator portal to management APIs
+1. Internet/client vers la gateway.
+2. Gateway vers service interne.
+3. Service vers fournisseur d'identité.
+4. Service vers base de données.
+5. Service vers broker et consommateurs du broker.
+6. Moteur d'intégration vers connecteur tiers.
+7. Portail opérateur vers API de gestion.
 
-## Threats and controls
+## Menaces et contrôles
 
-| Threat | Example | Planned controls |
+| Menace | Exemple | Contrôles prévus |
 |---|---|---|
-| Broken authentication | Forged, expired, or wrong-audience JWT | Signature, issuer, audience, expiry and algorithm validation; key rotation |
-| Broken authorization | User accesses another customer's record | Resource-level authorization and negative tests |
-| Abuse/resource exhaustion | Burst traffic or huge payload | Rate limits, quotas, body limits, timeouts |
-| Injection | Malicious query or mapping expression | Parameterized queries, safe parsers, allowlisted mapping operations |
-| SSRF | Connector calls internal metadata endpoints | Destination allowlists, DNS/IP checks, egress restrictions |
-| Secret leakage | Token appears in logs | Redaction, secret manager, log scanning |
-| Replay/duplicate delivery | Message processed more than once | Idempotency keys and deduplication |
-| Message loss | DB commit succeeds but event publish fails | Transactional outbox and retry/reconciliation |
-| Supply-chain risk | Vulnerable dependency or action | Dependency scanning, pinned actions, update policy |
-| Sensitive telemetry | PII in traces/logs | Data minimization, redaction, retention controls |
+| Authentification défaillante | JWT falsifié, expiré ou avec mauvaise audience | Validation signature, issuer, audience, expiration et algorithme ; rotation des clés |
+| Autorisation défaillante | Un utilisateur accède au dossier d'un autre client | Autorisation au niveau des ressources et tests négatifs |
+| Abus/épuisement des ressources | Pic de trafic ou payload volumineux | Limites de débit, quotas, limites de corps, timeouts |
+| Injection | Requête ou expression de mapping malveillante | Requêtes paramétrées, parseurs sûrs, opérations de mapping autorisées |
+| SSRF | Un connecteur appelle un endpoint de métadonnées interne | Liste d'autorisation des destinations, vérification DNS/IP, restrictions de sortie |
+| Fuite de secrets | Un jeton apparaît dans les journaux | Masquage, gestionnaire de secrets, scan des journaux |
+| Rejeu/livraison en double | Message traité plusieurs fois | Clés d'idempotence et déduplication |
+| Perte de message | Commit DB réussi mais publication événementielle en échec | Transactional outbox et retry/réconciliation |
+| Risque supply chain | Dépendance ou action vulnérable | Scan des dépendances, actions épinglées, politique de mise à jour |
+| Télémétrie sensible | Données personnelles dans les traces/journaux | Minimisation des données, masquage, contrôles de rétention |
 
-## OAuth2/OIDC guidance
+## Recommandations OAuth2/OIDC
 
-- Use Authorization Code with PKCE for browser-based user sign-in.
-- Use Client Credentials for machine-to-machine access where appropriate.
-- Do not use the Resource Owner Password Credentials grant.
-- Keep access tokens short-lived and validate audience and scopes.
-- Keep client secrets out of frontend bundles.
-- Use asymmetric signing and documented key rotation where supported.
+- Utiliser Authorization Code avec PKCE pour la connexion des utilisateurs depuis un navigateur.
+- Utiliser Client Credentials pour les accès machine-à-machine lorsque c'est adapté.
+- Ne pas utiliser le grant Resource Owner Password Credentials.
+- Garder les jetons d'accès de courte durée et valider l'audience et les scopes.
+- Garder les secrets client hors des bundles frontend.
+- Utiliser une signature asymétrique et une procédure de rotation des clés documentée lorsque c'est pris en charge.
 
-## Security test plan
+## Plan de tests de sécurité
 
-- Missing, malformed, expired, wrong-issuer, and wrong-audience token tests.
-- Insufficient scope/role and cross-tenant/resource access tests.
-- Rate-limit and payload-size tests.
-- Connector URL allowlist and SSRF regression tests.
-- Secret-redaction tests.
-- Replay and duplicate event tests.
-- Dependency and container image scanning.
+- Tests de jetons manquants, mal formés, expirés, avec mauvais issuer ou mauvaise audience.
+- Tests de rôles/scopes insuffisants et d'accès inter-tenant/ressource.
+- Tests de limitation de débit et de taille de payload.
+- Tests de liste d'autorisation des URL de connecteurs et de régression SSRF.
+- Tests de masquage des secrets.
+- Tests de rejeu et de traitement des événements en double.
+- Scan des dépendances et des images de conteneurs.
 
-This is a living threat model. Revisit it when new connectors, data types, or trust boundaries are introduced.
+Ce modèle de menaces est évolutif. Le revoir lorsque de nouveaux connecteurs, types de données ou frontières de confiance sont introduits.

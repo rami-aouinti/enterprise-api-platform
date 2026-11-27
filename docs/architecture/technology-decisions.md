@@ -1,34 +1,38 @@
-# Technology Choices and Trade-offs
+# Choix technologiques et compromis
 
-This document records the initial baseline. Specific versions and deployment modes are finalized in implementation issues and ADRs.
+Ce document consigne le socle initial. Les versions précises et les modes de déploiement sont finalisés dans les tickets d'implémentation et les ADR.
 
-| Technology | Responsibility | Why selected | Trade-off / caution |
+| Technologie | Responsabilité | Pourquoi ce choix | Compromis / précautions |
 |---|---|---|---|
-| PHP 8.4 + Symfony 7 | Domain APIs and integration runtime | Aligns with backend experience; mature HTTP, DI, Messenger, validation and security ecosystem | Keep services independently deployable; avoid shared-kernel coupling |
-| React + TypeScript | Operator portal | Strong ecosystem and typed UI | Do not put authorization decisions only in the browser |
-| Kong Gateway | API edge | Declarative routing and plugin ecosystem | OSS feature set differs from enterprise features; validate OIDC plugin approach |
-| Keycloak | Identity provider | Standards-based OAuth2/OIDC and self-hosted learning | Realm/client configuration and key rotation need operational care |
-| OpenAPI 3.1 | API contracts | Portable, tool-friendly contract format | Keep contract aligned with runtime behavior |
-| Spectral | API linting | Customizable governance rules | Rules should be actionable, not stylistic noise |
-| PostgreSQL | Transactional data | Reliable relational persistence | Each service owns schema/data boundaries |
-| RabbitMQ | Work queues | Routing, acknowledgements, retry/DLQ patterns | Avoid treating queue delivery as exactly-once |
-| Kafka | Event streams | Retention, replay, consumer groups | Operational complexity; use only where stream semantics add value |
-| Redis | Cache/coordination | Fast shared cache | Cache invalidation and durability must be explicit |
-| OpenTelemetry | Instrumentation | Vendor-neutral telemetry | Cardinality, sampling, and sensitive data require controls |
-| Prometheus/Grafana/Loki/Jaeger | Operations | Practical metrics/logs/traces stack | Resource use and retention need limits |
-| Docker Compose | Local orchestration | Reproducible developer setup | Not a production orchestrator |
-| GitHub Actions | CI | Native repository automation | Pin actions and use least-privilege permissions |
+| PHP 8.4 + Symfony 7 | API métier et moteur d'intégration | Correspond à l'expérience backend ; écosystème mature HTTP, DI, Messenger, validation et sécurité | Garder les services déployables indépendamment ; éviter le couplage par un noyau partagé |
+| React + TypeScript | Portail opérateur | Écosystème riche et interface typée | Ne pas prendre les décisions d'autorisation uniquement dans le navigateur |
+| Kong Gateway | Périphérie API | Routage déclaratif et écosystème de plugins | Les fonctions OSS diffèrent de l'édition entreprise ; valider l'approche du plugin OIDC |
+| Keycloak | Fournisseur d'identité | OAuth2/OIDC standard et apprentissage auto-hébergé | La configuration des realms/clients et la rotation des clés nécessitent une attention opérationnelle |
+| OpenAPI 3.1 | Contrats API | Format de contrat portable et compatible avec de nombreux outils | Garder le contrat aligné sur le comportement réel |
+| Spectral | Linting API | Règles de gouvernance personnalisables | Les règles doivent être utiles et actionnables, pas du bruit stylistique |
+| PostgreSQL | Données transactionnelles | Persistance relationnelle fiable | Chaque service possède ses frontières de schéma et de données |
+| RabbitMQ | Files de travail | Routage, accusés de réception, retries et DLQ | Ne pas considérer la livraison comme « exactement une fois » |
+| Kafka | Flux d'événements | Rétention, rejeu, groupes de consommateurs | Complexité opérationnelle ; l'utiliser uniquement si la sémantique de flux apporte une valeur |
+| Redis | Cache/coordination | Cache partagé rapide | L'invalidation du cache et sa durabilité doivent être explicites |
+| OpenTelemetry | Instrumentation | Télémétrie indépendante des fournisseurs | Cardinalité, échantillonnage et données sensibles nécessitent des contrôles |
+| Prometheus/Grafana/Loki/Jaeger | Exploitation | Stack pratique de métriques/journaux/traces | Limiter consommation des ressources et rétention |
+| Docker Compose | Orchestration locale | Environnement développeur reproductible | N'est pas un orchestrateur de production |
+| GitHub Actions | CI | Automatisation native du dépôt | Épingler les versions des actions et appliquer le moindre privilège |
 
-## Deliberate design choices
+## Choix de conception assumés
 
-### RabbitMQ and Kafka
-Use RabbitMQ for work distribution and command/task processing with acknowledgements, bounded retries, and dead-lettering. Use Kafka for durable domain event streams where multiple independent consumers and replay are meaningful. Do not duplicate every event to both brokers without a documented business need.
+### RabbitMQ et Kafka
 
-### Gateway and service security
-The gateway performs edge controls, but services remain responsible for resource-level authorization and business invariants. A valid JWT does not automatically grant access to every object.
+Utiliser RabbitMQ pour la distribution de tâches et le traitement de commandes/jobs avec accusés de réception, retries limités et DLQ. Utiliser Kafka pour les flux durables d'événements métier lorsque plusieurs consommateurs indépendants et le rejeu ont du sens. Ne pas dupliquer chaque événement dans les deux brokers sans besoin métier documenté.
 
-### iPaaS scope
-Build a focused educational integration runtime rather than attempting to recreate a commercial iPaaS product. Start with a small number of connector types, explicit mappings, bounded workflows, and auditable execution history.
+### Gateway et sécurité des services
 
-### API versioning
-Prefer additive, backward-compatible changes within a major version. Introduce a new major version only when compatibility cannot be preserved. Publish deprecation and sunset expectations.
+La gateway applique les contrôles en périphérie, mais les services restent responsables de l'autorisation au niveau des ressources et des invariants métier. Un JWT valide ne donne pas automatiquement accès à tous les objets.
+
+### Périmètre iPaaS
+
+Construire un moteur d'intégration pédagogique ciblé plutôt que tenter de recréer un produit iPaaS commercial. Commencer avec peu de types de connecteurs, des mappings explicites, des workflows limités et un historique d'exécution auditable.
+
+### Versionnement API
+
+Privilégier les changements additifs et rétrocompatibles au sein d'une version majeure. Introduire une nouvelle version majeure uniquement lorsque la compatibilité ne peut être préservée. Publier les règles de dépréciation et les dates de retrait.

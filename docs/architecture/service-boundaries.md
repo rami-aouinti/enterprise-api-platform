@@ -1,37 +1,37 @@
-# Service Boundaries and Domain Context Map
+# Frontières des services et carte des contextes métier
 
-**Status:** Baseline for Phase 02  
-**Related work:** Issue #17, ADR-0001
+**Statut :** socle de la Phase 02  
+**Travaux associés :** ticket #17, ADR-0001
 
-This document defines ownership and integration rules before Policy, Claims, and Billing APIs are implemented. The Customer API is the first implemented domain API; the other services below are architectural boundaries, not claims that their runtime implementations already exist.
+Ce document définit les règles de propriété et d'intégration avant l'implémentation des API Policy, Claims et Billing. Customer API est la première API métier implémentée ; les autres services ci-dessous représentent des frontières d'architecture et ne signifient pas que leur exécution est déjà disponible.
 
-## 1. Bounded contexts and ownership
+## 1. Contextes délimités et propriété
 
-| Service | Owns | Must not own |
+| Service | Données dont il est propriétaire | Ne doit pas posséder |
 |---|---|---|
-| Customer | Customer identity, name, contact details, customer lifecycle | Policies, claims, invoices, payment transactions |
-| Policy | Policy number, product, insured risk, coverage, premium terms, effective dates, policy lifecycle | Customer profile, claim assessment, invoice/payment ledger |
-| Claims | Claim reference, loss details, evidence metadata/references, assessment, decision, claim lifecycle | Policy terms, customer profile, invoice/payment ledger |
-| Billing | Invoice, invoice lines, amount due, payment allocation, payment status, billing ledger | Customer profile, policy coverage, claim assessment |
+| Customer | Identité client, nom, coordonnées, cycle de vie client | Contrats, sinistres, factures, transactions de paiement |
+| Policy | Numéro de contrat, produit, risque assuré, garanties, conditions tarifaires, dates d'effet, cycle de vie du contrat | Profil client, évaluation des sinistres, registre des factures/paiements |
+| Claims | Référence du sinistre, détails du dommage, métadonnées/références des justificatifs, évaluation, décision, cycle de vie du sinistre | Conditions du contrat, profil client, registre des factures/paiements |
+| Billing | Facture, lignes de facture, montant dû, affectation des paiements, statut de paiement, registre de facturation | Profil client, garanties du contrat, évaluation des sinistres |
 
-A service is the authoritative writer for its owned data. Other services may keep purpose-limited read projections, but those projections are not authoritative and must be rebuildable from APIs/events.
+Un service est l'unique propriétaire autorisé à écrire les données qui lui appartiennent. Les autres services peuvent conserver des projections de lecture limitées à leur besoin, mais ces projections ne sont pas la source de vérité et doivent pouvoir être reconstruites depuis les API/événements.
 
-## 2. Context map
+## 2. Carte des contextes
 
 ~~~mermaid
 flowchart LR
-    Consumer[Partner / Channel] --> Gateway[Kong API Gateway]
+    Consumer[Partenaire / Canal] --> Gateway[Kong API Gateway]
     Gateway --> Customer[Customer Service]
     Gateway --> Policy[Policy Service]
     Gateway --> Claims[Claims Service]
     Gateway --> Billing[Billing Service]
 
-    Policy -->|Customer API: verify/reference| Customer
-    Claims -->|Policy API: coverage verification| Policy
-    Claims -->|Customer API: contact reference when needed| Customer
-    Billing -->|Customer API: invoice customer reference| Customer
+    Policy -->|API Customer : vérifier/référencer| Customer
+    Claims -->|API Policy : vérifier les garanties| Policy
+    Claims -->|API Customer : référence de contact si nécessaire| Customer
+    Billing -->|API Customer : référence client de facture| Customer
 
-    Policy -.->|PolicyIssued / PolicyCancelled| Events[(Domain Events)]
+    Policy -.->|PolicyIssued / PolicyCancelled| Events[(Événements métier)]
     Claims -.->|ClaimOpened / ClaimDecisionRecorded| Events
     Billing -.->|InvoiceIssued / PaymentReceived| Events
     Events -.-> Customer
@@ -40,90 +40,90 @@ flowchart LR
     Events -.-> Billing
 ~~~
 
-Solid arrows represent synchronous API calls. Dashed arrows represent asynchronous domain-event publication/consumption. The event broker is transport, not an owner of domain state. The gateway is an entry point and does not orchestrate business rules.
+Les flèches pleines représentent les appels API synchrones. Les flèches pointillées représentent la publication/consommation asynchrone d'événements métier. Le broker est un transport, pas le propriétaire de l'état métier. La gateway est un point d'entrée et n'orchestre pas les règles métier.
 
-## 3. Allowed interaction rules
+## 3. Règles d'interaction autorisées
 
-1. A service may read or change its own database only.
-2. A service obtains another context's current authoritative facts through that context's published API.
-3. A service reacts to another context's durable business fact through a versioned event contract.
-4. Never join across service databases, query another service's tables, or write another service's records.
-5. Avoid chatty synchronous chains. If a workflow can tolerate eventual consistency, prefer events and a local process state.
-6. Every event has a stable event ID, event type, schema version, occurrence timestamp, producer, and correlation ID. Consumers must be idempotent.
-7. Events carry the minimum required business data. Prefer aggregate identifiers and immutable facts over full customer, policy, or payment records.
-8. Synchronous APIs have explicit timeouts and failure behavior. A downstream outage must not silently produce a successful business outcome.
+1. Un service peut uniquement lire ou modifier sa propre base de données.
+2. Pour obtenir les faits de référence actuels d'un autre contexte, un service utilise l'API publiée par ce contexte.
+3. Pour réagir à un fait métier durable d'un autre contexte, un service utilise un contrat d'événement versionné.
+4. Ne jamais effectuer de jointure entre bases de services, interroger les tables d'un autre service ou écrire dans ses enregistrements.
+5. Éviter les chaînes d'appels synchrones trop bavardes. Si un workflow tolère la cohérence éventuelle, préférer les événements et un état de processus local.
+6. Chaque événement possède un identifiant stable, un type, une version de schéma, un horodatage d'occurrence, un producteur et un identifiant de corrélation. Les consommateurs doivent être idempotents.
+7. Les événements transportent le minimum de données métier nécessaire. Préférer les identifiants d'agrégats et les faits immuables aux dossiers complets de clients, contrats ou paiements.
+8. Les API synchrones ont des timeouts et des comportements d'erreur explicites. Une panne en aval ne doit pas produire silencieusement un résultat métier positif.
 
-## 4. Initial integration contracts
+## 4. Premiers contrats d'intégration
 
-| Producer | Contract | Consumer | Interaction | Purpose |
+| Producteur | Contrat | Consommateur | Interaction | Objectif |
 |---|---|---|---|---|
-| Customer | GET /api/v1/customers/{id} | Policy, Claims, Billing | Synchronous REST | Validate/reference a customer; return only fields needed by the caller |
-| Policy | GET /api/v1/policies/{id}/coverage | Claims | Synchronous REST | Verify coverage for the reported loss date and risk |
-| Policy | policy.issued.v1 / policy.cancelled.v1 | Claims, Billing | Event | Notify lifecycle changes without shared database access |
-| Claims | claim.opened.v1 / claim.decision-recorded.v1 | Policy, Billing | Event | Publish claim lifecycle facts and decisions |
-| Billing | invoice.issued.v1 / payment.received.v1 | Authorized consumers | Event/API | Publish billing lifecycle facts |
+| Customer | GET /api/v1/customers/{id} | Policy, Claims, Billing | REST synchrone | Valider/référencer un client ; ne retourner que les champs nécessaires à l'appelant |
+| Policy | GET /api/v1/policies/{id}/coverage | Claims | REST synchrone | Vérifier les garanties pour la date du sinistre et le risque déclaré |
+| Policy | policy.issued.v1 / policy.cancelled.v1 | Claims, Billing | Événement | Notifier les changements de cycle de vie sans accès à une base partagée |
+| Claims | claim.opened.v1 / claim.decision-recorded.v1 | Policy, Billing | Événement | Publier les faits du cycle de vie et les décisions de sinistre |
+| Billing | invoice.issued.v1 / payment.received.v1 | Consommateurs autorisés | Événement/API | Publier les faits du cycle de vie de facturation |
 
-These are logical contract names, not implemented endpoints or broker bindings yet. Detailed OpenAPI schemas and AsyncAPI/event schemas are added with the owning service and messaging tickets. No consumer may infer an undocumented contract from another service's database model.
+Il s'agit de noms de contrats logiques, pas encore d'endpoints implémentés ni de bindings de broker. Les schémas OpenAPI détaillés et les schémas d'événements AsyncAPI seront ajoutés avec les tickets du service propriétaire et de la messagerie. Aucun consommateur ne doit déduire un contrat non documenté à partir du modèle de base d'un autre service.
 
-## 5. Cross-service workflow examples
+## 5. Exemples de workflows interservices
 
-### Claim intake
-1. Claims receives a claim request and validates its own request shape and authorization.
-2. Claims calls Policy's coverage endpoint with the policy reference and loss date.
-3. Claims stores the claim and its own assessment state in the Claims database.
-4. Claims publishes claim.opened.v1 after its state is committed.
-5. Billing may consume the event to create a pending billing/review task where business rules require it. It does not update Claims tables.
+### Déclaration d'un sinistre
+1. Claims reçoit une demande de déclaration et valide la structure de sa requête ainsi que l'autorisation.
+2. Claims appelle l'endpoint de vérification des garanties de Policy avec la référence du contrat et la date du sinistre.
+3. Claims stocke le sinistre et son état d'évaluation dans sa propre base.
+4. Claims publie `claim.opened.v1` après validation de la transaction.
+5. Billing peut consommer l'événement pour créer une tâche de facturation/revue en attente lorsque les règles métier le prévoient. Il ne modifie pas les tables Claims.
 
-If Policy is unavailable, Claims returns a retryable dependency failure or accepts the claim in an explicit pending_policy_verification state. It must not assume coverage.
+Si Policy est indisponible, Claims renvoie une erreur de dépendance pouvant être retentée ou accepte le sinistre dans un état explicite `pending_policy_verification`. Il ne doit jamais supposer que les garanties sont valides.
 
-### Policy issuance
-1. Policy verifies the customer reference through Customer API.
-2. Policy validates product and coverage rules within Policy.
-3. Policy persists the policy in its own database.
-4. Policy publishes policy.issued.v1 after commit.
-5. Billing consumes the event and creates its own invoice record according to billing rules.
+### Émission d'un contrat
+1. Policy vérifie la référence client via Customer API.
+2. Policy valide les règles de produit et de garantie dans son propre contexte.
+3. Policy persiste le contrat dans sa propre base.
+4. Policy publie `policy.issued.v1` après commit.
+5. Billing consomme l'événement et crée sa propre facture selon ses règles.
 
-The workflow is eventually consistent. It does not use a distributed database transaction.
+Le workflow est à cohérence éventuelle. Il n'utilise pas de transaction distribuée entre bases.
 
-## 6. Persistence boundaries
+## 6. Frontières de persistance
 
-| Service | Logical database | Schema owner | Credentials |
+| Service | Base logique | Propriétaire du schéma | Identifiants |
 |---|---|---|---|
-| Customer | customer_service | Customer | Customer-only role |
-| Policy | policy_service | Policy | Policy-only role |
-| Claims | claims_service | Claims | Claims-only role |
-| Billing | billing_service | Billing | Billing-only role |
+| Customer | customer_service | Customer | Rôle réservé à Customer |
+| Policy | policy_service | Policy | Rôle réservé à Policy |
+| Claims | claims_service | Claims | Rôle réservé à Claims |
+| Billing | billing_service | Billing | Rôle réservé à Billing |
 
-For local Docker Compose, these databases may run on one PostgreSQL server/container to reduce resource usage. They remain separate databases with separate users/credentials and independent migrations. Production may place them on separate database instances without changing service contracts.
+Avec Docker Compose local, ces bases peuvent fonctionner sur un même serveur/conteneur PostgreSQL pour réduire l'utilisation des ressources. Elles restent des bases séparées avec des utilisateurs/identifiants distincts et des migrations indépendantes. La production peut les placer sur des instances séparées sans changer les contrats de service.
 
-The currently implemented Customer API migration is owned by Customer Service. Policy, Claims, and Billing databases are created by their respective implementation tickets; this document does not imply they already exist.
+La migration actuellement implémentée pour Customer API appartient à Customer Service. Les bases Policy, Claims et Billing seront créées par leurs tickets d'implémentation respectifs ; ce document ne prétend pas qu'elles existent déjà.
 
-## 7. Failure, consistency, and security rules
+## 7. Règles de panne, cohérence et sécurité
 
-- Use an outbox when a service must reliably publish an event corresponding to a committed database change.
-- Consumers persist processed event IDs or otherwise enforce idempotency.
-- Retry transient failures with bounded exponential backoff; route exhausted messages to a dead-letter path.
-- Use correlation IDs across HTTP and messaging; do not use them as authorization credentials.
-- Authenticate service-to-service calls and authorize the requested operation at the receiving service.
-- Do not put secrets, access tokens, full payment details, or unnecessary personal data in events or logs.
-- Define retention and deletion propagation when the concrete data classification is implemented.
+- Utiliser un outbox lorsqu'un service doit publier de manière fiable un événement correspondant à un changement de base commité.
+- Les consommateurs enregistrent les identifiants des événements traités ou appliquent un autre mécanisme d'idempotence.
+- Retenter les erreurs transitoires avec un backoff exponentiel limité ; diriger les messages épuisés vers une DLQ.
+- Utiliser des identifiants de corrélation entre HTTP et messagerie ; ne jamais les utiliser comme justificatifs d'autorisation.
+- Authentifier les appels service-à-service et autoriser l'opération demandée dans le service destinataire.
+- Ne pas placer de secrets, jetons d'accès, données complètes de paiement ou données personnelles inutiles dans les événements/journaux.
+- Définir les règles de rétention et de propagation des suppressions lorsque la classification concrète des données sera implémentée.
 
-## 8. Implementation status
+## 8. État de l'implémentation
 
-| Capability | Status |
+| Capacité | Statut |
 |---|---|
-| Customer API and Customer-owned PostgreSQL persistence | Implemented in Ticket #16 |
-| Policy boundary, ownership, and contracts | Defined; implementation pending |
-| Claims boundary, ownership, and contracts | Defined; implementation pending |
-| Billing boundary, ownership, and contracts | Defined; implementation pending |
-| Separate local databases/users for all four services | Target architecture; provisioned with service infrastructure tickets |
-| Versioned event schemas and broker topology | Defined conceptually; implemented in messaging tickets |
+| API Customer et persistance PostgreSQL détenue par Customer | Implémentées dans le ticket #16 |
+| Frontière, propriété et contrats Policy | Définis ; implémentation à venir |
+| Frontière, propriété et contrats Claims | Définis ; implémentation à venir |
+| Frontière, propriété et contrats Billing | Définis ; implémentation à venir |
+| Bases/utilisateurs locaux distincts pour les quatre services | Architecture cible ; provisionnement avec les tickets d'infrastructure des services |
+| Schémas d'événements versionnés et topologie broker | Définis conceptuellement ; implémentation dans les tickets de messagerie |
 
-## 9. Validation checklist
+## 9. Liste de validation
 
-- [x] Context map identifies ownership and allowed interactions.
-- [x] Each service has a separately owned persistence boundary in the target design.
-- [x] Cross-service workflows use APIs/events rather than shared database writes.
-- [x] Initial domain and integration contracts are documented.
-- [ ] Physical databases/users for Policy, Claims, and Billing are provisioned with their service implementations.
-- [ ] OpenAPI and event schemas are added alongside the owning API/messaging implementations.
+- [x] La carte des contextes identifie la propriété et les interactions autorisées.
+- [x] Chaque service possède une frontière de persistance distincte dans l'architecture cible.
+- [x] Les workflows interservices utilisent des API/événements plutôt que des écritures dans une base partagée.
+- [x] Les premiers contrats métier et d'intégration sont documentés.
+- [ ] Les bases/utilisateurs physiques de Policy, Claims et Billing sont provisionnés avec leurs implémentations.
+- [ ] Les schémas OpenAPI et événements sont ajoutés avec les implémentations API/messagerie propriétaires.
