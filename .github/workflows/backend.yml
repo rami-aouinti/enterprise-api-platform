@@ -1,0 +1,89 @@
+name: Backend quality
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'config/**'
+      - 'public/**'
+      - 'tests/**'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'phpunit.xml.dist'
+      - 'phpstan.neon'
+      - '.php-cs-fixer.dist.php'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'config/**'
+      - 'public/**'
+      - 'tests/**'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'phpunit.xml.dist'
+      - 'phpstan.neon'
+      - '.php-cs-fixer.dist.php'
+      - '.github/workflows/backend.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: PHP 8.4 / Symfony 7.4
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: enterprise_api_test
+          POSTGRES_USER: enterprise_api
+          POSTGRES_PASSWORD: test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U enterprise_api -d enterprise_api_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          extensions: ctype, iconv, pdo_pgsql
+          tools: composer:v2
+
+      - name: Validate Composer configuration
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Check code style
+        run: composer cs:check
+
+      - name: Run static analysis
+        run: composer analyse
+
+      - name: Run unit and functional tests
+        env:
+          APP_ENV: test
+          APP_SECRET: ci-test-secret
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_NAME: enterprise_api_test
+          DB_USER: enterprise_api
+          DB_PASSWORD: test-password
+        run: composer test
