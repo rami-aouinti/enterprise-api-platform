@@ -1,7 +1,7 @@
 security:
     providers:
         keycloak_users:
-            id: App\\Security\\KeycloakUserProvider
+            id: App\Security\KeycloakUserProvider
 
     firewalls:
         dev:
