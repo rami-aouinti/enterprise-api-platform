@@ -8,6 +8,7 @@ use App\Customer\Application\CustomerRepository;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
+use RuntimeException;
 
 final readonly class DoctrineCustomerRepository implements CustomerRepository
 {
@@ -61,6 +62,10 @@ final readonly class DoctrineCustomerRepository implements CustomerRepository
                 'status' => $customer['status'],
             ],
         );
+
+        if ($row === false) {
+            throw new RuntimeException('The customer insert did not return a record.');
+        }
 
         return $this->hydrate($row);
     }

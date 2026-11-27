@@ -26,7 +26,7 @@ final class CustomerInputValidator
         foreach (['first_name', 'last_name'] as $field) {
             if (!$partial || array_key_exists($field, $input)) {
                 $value = $input[$field] ?? null;
-                if (!is_string($value) || trim($value) === '' || mb_strlen(trim($value)) > 100) {
+                if (!is_string($value) || trim($value) === '' || strlen(trim($value)) > 100) {
                     $errors[$field] = 'This field must be a non-empty string of at most 100 characters.';
                 } else {
                     $data[$field] = trim($value);
@@ -36,16 +36,16 @@ final class CustomerInputValidator
 
         if (!$partial || array_key_exists('email', $input)) {
             $email = $input['email'] ?? null;
-            if (!is_string($email) || mb_strlen(trim($email)) > 254 || filter_var(trim($email), FILTER_VALIDATE_EMAIL) === false) {
+            if (!is_string($email) || strlen(trim($email)) > 254 || filter_var(trim($email), FILTER_VALIDATE_EMAIL) === false) {
                 $errors['email'] = 'A valid email address of at most 254 characters is required.';
             } else {
-                $data['email'] = mb_strtolower(trim($email));
+                $data['email'] = strtolower(trim($email));
             }
         }
 
         if (array_key_exists('phone', $input)) {
             $phone = $input['phone'];
-            if ($phone !== null && (!is_string($phone) || mb_strlen(trim($phone)) > 30)) {
+            if ($phone !== null && (!is_string($phone) || strlen(trim($phone)) > 30)) {
                 $errors['phone'] = 'This field must be a string of at most 30 characters or null.';
             } else {
                 $data['phone'] = is_string($phone) ? trim($phone) : null;

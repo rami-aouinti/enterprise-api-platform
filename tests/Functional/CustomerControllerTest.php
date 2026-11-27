@@ -14,10 +14,10 @@ final class CustomerControllerTest extends WebTestCase
 
     public function testCreateCustomerReturnsCreatedResourceAndLocation(): void
     {
+        $client = static::createClient();
         $repository = $this->repository();
         $repository->expects(self::once())->method('create')->willReturn($this->customer());
 
-        $client = static::createClient();
         $client->jsonRequest('POST', '/api/v1/customers', [
             'first_name' => 'Ada',
             'last_name' => 'Lovelace',
@@ -31,11 +31,11 @@ final class CustomerControllerTest extends WebTestCase
 
     public function testListCustomersReturnsPaginatedCollection(): void
     {
+        $client = static::createClient();
         $repository = $this->repository();
         $repository->expects(self::once())->method('count')->willReturn(1);
         $repository->expects(self::once())->method('findAll')->with(10, 0)->willReturn([$this->customer()]);
 
-        $client = static::createClient();
         $client->request('GET', '/api/v1/customers?page=1&per_page=10');
 
         self::assertResponseIsSuccessful();
@@ -44,10 +44,10 @@ final class CustomerControllerTest extends WebTestCase
 
     public function testGetCustomerReturnsNotFoundProblemWhenMissing(): void
     {
+        $client = static::createClient();
         $repository = $this->repository();
         $repository->expects(self::once())->method('find')->with(self::CUSTOMER_ID)->willReturn(null);
 
-        $client = static::createClient();
         $client->request('GET', '/api/v1/customers/' . self::CUSTOMER_ID);
 
         self::assertResponseStatusCodeSame(404);
@@ -57,9 +57,9 @@ final class CustomerControllerTest extends WebTestCase
 
     public function testInvalidCreatePayloadReturnsValidationProblem(): void
     {
+        $client = static::createClient();
         $this->repository();
 
-        $client = static::createClient();
         $client->jsonRequest('POST', '/api/v1/customers', [
             'first_name' => '',
             'last_name' => 'Lovelace',
@@ -73,6 +73,7 @@ final class CustomerControllerTest extends WebTestCase
 
     public function testPatchUpdatesOnlyProvidedFields(): void
     {
+        $client = static::createClient();
         $customer = $this->customer();
         $customer['status'] = 'inactive';
         $repository = $this->repository();
@@ -80,7 +81,6 @@ final class CustomerControllerTest extends WebTestCase
             ->with(self::CUSTOMER_ID, ['status' => 'inactive'])
             ->willReturn($customer);
 
-        $client = static::createClient();
         $client->jsonRequest('PATCH', '/api/v1/customers/' . self::CUSTOMER_ID, ['status' => 'inactive']);
 
         self::assertResponseIsSuccessful();

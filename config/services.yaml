@@ -9,3 +9,6 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\Customer\Application\CustomerRepository:
+        alias: App\Customer\Infrastructure\DoctrineCustomerRepository
