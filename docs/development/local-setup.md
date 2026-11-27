@@ -66,7 +66,14 @@ docker compose exec api composer analyse
 docker compose exec api composer cs:check
 ~~~
 
-The first dependency resolution should produce a `composer.lock`. Commit that lock file so future local builds and CI resolve identical package versions.
+The first dependency resolution creates `composer.lock` inside the container. Copy and commit it to make builds and CI reproducible:
+
+~~~bash
+docker compose cp api:/app/composer.lock ./composer.lock
+git add composer.lock
+git commit -m "chore(deps): lock Symfony backend dependencies (#15)"
+git push origin main
+~~~
 
 ## Logs and lifecycle
 
