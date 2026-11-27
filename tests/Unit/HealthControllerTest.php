@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\\Tests\\Unit;
+namespace App\Tests\Unit;
 
-use App\\Controller\\HealthController;
-use Doctrine\\DBAL\\Connection;
-use Doctrine\\DBAL\\Result;
-use PHPUnit\\Framework\\TestCase;
+use App\Controller\HealthController;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Result;
+use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 final class HealthControllerTest extends TestCase
