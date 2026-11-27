@@ -32,14 +32,27 @@ test -n "$SERVICE_ACCOUNT_USERNAME"
   --rolename api.read
 
 # The persistent Keycloak volume may predate the current realm import.
-# Explicitly attach the built-in "roles" client scope so realm_access.roles
-# is emitted in access tokens even when the realm was not freshly imported.
-ROLES_SCOPE_ID=$("$KC" get client-scopes -r "$REALM" -q name=roles \
-  | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
-  | head -n 1)
-test -n "$ROLES_SCOPE_ID"
+# Add the realm-role mapper to the audience scope, which is already assigned
+# to the machine client. This avoids relying on the optional built-in "roles" scope.
+AUDIENCE_SCOPE_ID=$("$KC" get client-scopes -r "$REALM" \
+  | sed -n '/"id" : /{h}; /"name" : "enterprise-api-audience"/{x;s/.*"id" : "\\([^"]*\\)".*/\\1/p;}')
+test -n "$AUDIENCE_SCOPE_ID"
 
-"$KC" update "clients/$CLIENT_ID/default-client-scopes/$ROLES_SCOPE_ID" -r "$REALM"
+MAPPER_ID=$("$KC" get "client-scopes/$AUDIENCE_SCOPE_ID/protocol-mappers/models" -r "$REALM" \
+  | sed -n '/"id" : /{h}; /"name" : "enterprise-api-realm-roles"/{x;s/.*"id" : "\\([^"]*\\)".*/\\1/p;}')
 
-echo "Machine client provisioned with api.read role and OIDC roles scope."
+if [ -z "$MAPPER_ID" ]; then
+  "$KC" create "client-scopes/$AUDIENCE_SCOPE_ID/protocol-mappers/models" -r "$REALM" \
+    -s name=enterprise-api-realm-roles \
+    -s protocol=openid-connect \
+    -s protocolMapper=oidc-usermodel-realm-role-mapper \
+    -s 'config."claim.name"=realm_access.roles' \
+    -s 'config."jsonType.label"=String' \
+    -s 'config."multivalued"=true' \
+    -s 'config."access.token.claim"=true' \
+    -s 'config."id.token.claim"=false' \
+    -s 'config."userinfo.token.claim"=true'
+fi
+
+echo "Machine client provisioned with api.read role and realm_access.roles mapper."
 REMOTE
