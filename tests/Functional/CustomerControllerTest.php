@@ -1,0 +1,113 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Functional;
+
+use App\Customer\Application\CustomerRepository;
+use PHPUnit\Framework\MockObject\MockObject;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+
+final class CustomerControllerTest extends WebTestCase
+{
+    private const string CUSTOMER_ID = '123e4567-e89b-42d3-a456-426614174000';
+
+    public function testCreateCustomerReturnsCreatedResourceAndLocation(): void
+    {
+        $repository = $this->repository();
+        $repository->expects(self::once())->method('create')->willReturn($this->customer());
+
+        $client = static::createClient();
+        $client->jsonRequest('POST', '/api/v1/customers', [
+            'first_name' => 'Ada',
+            'last_name' => 'Lovelace',
+            'email' => 'ada@example.org',
+        ]);
+
+        self::assertResponseStatusCodeSame(201);
+        self::assertResponseHeaderSame('location', '/api/v1/customers/' . self::CUSTOMER_ID);
+        self::assertJsonContains(['id' => self::CUSTOMER_ID, 'email' => 'ada@example.org']);
+    }
+
+    public function testListCustomersReturnsPaginatedCollection(): void
+    {
+        $repository = $this->repository();
+        $repository->expects(self::once())->method('count')->willReturn(1);
+        $repository->expects(self::once())->method('findAll')->with(10, 0)->willReturn([$this->customer()]);
+
+        $client = static::createClient();
+        $client->request('GET', '/api/v1/customers?page=1&per_page=10');
+
+        self::assertResponseIsSuccessful();
+        self::assertJsonContains(['meta' => ['page' => 1, 'per_page' => 10, 'total' => 1, 'total_pages' => 1]]);
+    }
+
+    public function testGetCustomerReturnsNotFoundProblemWhenMissing(): void
+    {
+        $repository = $this->repository();
+        $repository->expects(self::once())->method('find')->with(self::CUSTOMER_ID)->willReturn(null);
+
+        $client = static::createClient();
+        $client->request('GET', '/api/v1/customers/' . self::CUSTOMER_ID);
+
+        self::assertResponseStatusCodeSame(404);
+        self::assertResponseHeaderSame('content-type', 'application/problem+json');
+        self::assertJsonContains(['status' => 404, 'title' => 'Customer not found']);
+    }
+
+    public function testInvalidCreatePayloadReturnsValidationProblem(): void
+    {
+        $this->repository();
+
+        $client = static::createClient();
+        $client->jsonRequest('POST', '/api/v1/customers', [
+            'first_name' => '',
+            'last_name' => 'Lovelace',
+            'email' => 'invalid',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertResponseHeaderSame('content-type', 'application/problem+json');
+        self::assertJsonContains(['status' => 422, 'title' => 'Validation failed']);
+    }
+
+    public function testPatchUpdatesOnlyProvidedFields(): void
+    {
+        $customer = $this->customer();
+        $customer['status'] = 'inactive';
+        $repository = $this->repository();
+        $repository->expects(self::once())->method('update')
+            ->with(self::CUSTOMER_ID, ['status' => 'inactive'])
+            ->willReturn($customer);
+
+        $client = static::createClient();
+        $client->jsonRequest('PATCH', '/api/v1/customers/' . self::CUSTOMER_ID, ['status' => 'inactive']);
+
+        self::assertResponseIsSuccessful();
+        self::assertJsonContains(['status' => 'inactive']);
+    }
+
+    /** @return CustomerRepository&MockObject */
+    private function repository(): CustomerRepository&MockObject
+    {
+        $repository = $this->createMock(CustomerRepository::class);
+        static::getContainer()->set(CustomerRepository::class, $repository);
+
+        return $repository;
+    }
+
+    /** @return array<string, mixed> */
+    private function customer(): array
+    {
+        return [
+            'id' => self::CUSTOMER_ID,
+            'first_name' => 'Ada',
+            'last_name' => 'Lovelace',
+            'email' => 'ada@example.org',
+            'phone' => null,
+            'status' => 'active',
+            'created_at' => '2026-11-27T15:00:00+00:00',
+            'updated_at' => '2026-11-27T15:00:00+00:00',
+        ];
+    }
+}
