@@ -2,7 +2,7 @@ FROM php:8.4-cli-alpine
 
 RUN set -eux; \
     apk add --no-cache libpq gmp; \
-    apk add --no-cache --virtual .build-deps $PHPIZE_DEPS postgresql-dev gmp-dev; \
+    apk add --no-cache --virtual .build-deps $PHPIZE_DEPS postgresql-dev gmp-dev linux-headers; \
     docker-php-ext-install pdo_pgsql gmp sockets; \
     apk del .build-deps; \
     php -r 'exit(extension_loaded("pdo_pgsql") && extension_loaded("gmp") && extension_loaded("sockets") ? 0 : 1);'
