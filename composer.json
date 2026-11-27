@@ -36,7 +36,7 @@
     }
   },
   "scripts": {
-    "test": "phpunit",
+    "test": "APP_ENV=test phpunit",
     "test:unit": "phpunit --testsuite Unit",
     "test:functional": "phpunit --testsuite Functional",
     "analyse": "phpstan analyse --configuration=phpstan.neon",
