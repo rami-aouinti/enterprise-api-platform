@@ -10,6 +10,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use JsonException;
 use RuntimeException;
+use stdClass;
 
 final readonly class DoctrineApiRegistryRepository implements ApiRegistryRepository
 {
@@ -142,13 +143,18 @@ final readonly class DoctrineApiRegistryRepository implements ApiRegistryReposit
     private function decodeJson(string $json): array
     {
         try {
-            $value = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+            $value = json_decode($json, false, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
             throw new RuntimeException('Stored API registry JSON is invalid.', previous: $exception);
         }
+        if ($value instanceof stdClass) {
+            return get_object_vars($value);
+        }
+
         if (!is_array($value)) {
             throw new RuntimeException('Stored API registry JSON must be an object or array.');
         }
+
         return $value;
     }
     private static function generateUuid(): string

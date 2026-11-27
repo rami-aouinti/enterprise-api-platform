@@ -133,6 +133,12 @@ expect_status "apis:read can filter the API catalog" 200 GET "/api/v1/registry/a
 OPENAPI_PAYLOAD=$(jq -n --arg title "$API_NAME" '{version:"1.0.0", document:{openapi:"3.1.0", info:{title:$title, version:"1.0.0"}, paths:{}}}')
 expect_status "apis:write can register an OpenAPI version" 201 POST "/api/v1/registry/apis/$API_ID/versions" "$TOKEN_APIS_WRITE" "$OPENAPI_PAYLOAD"
 expect_status "apis:read can retrieve the OpenAPI version" 200 GET "/api/v1/registry/apis/$API_ID/versions/1.0.0" "$TOKEN_APIS_READ"
+if [[ "$(jq -r '.document.paths | type' "$RESPONSE_BODY")" != "object" ]]; then
+  echo "FAIL: OpenAPI paths must remain a JSON object after PostgreSQL storage." >&2
+  cat "$RESPONSE_BODY" >&2
+  exit 1
+fi
+echo "PASS: Empty OpenAPI paths object is preserved in PostgreSQL"
 expect_status "Duplicate OpenAPI versions are rejected" 409 POST "/api/v1/registry/apis/$API_ID/versions" "$TOKEN_APIS_WRITE" "$OPENAPI_PAYLOAD"
 
 echo
