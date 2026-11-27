@@ -17,8 +17,12 @@ final readonly class KeycloakUser implements UserInterface
         private string $identifier,
         private array $roles,
         private array $scopes = [],
-    ) {}
+    ) {
+    }
 
+    /**
+     * @return non-empty-string
+     */
     public function getUserIdentifier(): string
     {
         return $this->identifier;
@@ -45,5 +49,7 @@ final readonly class KeycloakUser implements UserInterface
         return $this->scopes;
     }
 
-    public function eraseCredentials(): void {}
+    public function eraseCredentials(): void
+    {
+    }
 }
