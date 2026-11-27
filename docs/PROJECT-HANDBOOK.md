@@ -27,12 +27,13 @@ A feature is done when:
 
 ## 2. Git workflow
 
-- `main` must remain releasable.
-- Create one short-lived branch per issue: `feature/123-api-catalog`, `fix/145-token-validation`, `docs/151-threat-model`.
-- Use conventional commit messages: `feat(api-catalog): add API registration`, `fix(gateway): reject expired tokens`, `docs(architecture): describe gateway boundary`.
-- Open a PR for every change; link the issue with `Closes #123`.
+- main must remain releasable.
+- Create one short-lived branch per issue: feature/123-api-catalog, fix/145-token-validation, docs/151-threat-model.
+- Use Conventional Commit messages: feat(api-catalog): add API registration, fix(gateway): reject expired tokens, docs(architecture): describe gateway boundary.
+- Open a PR for every change; link the issue with Closes #123.
 - Prefer squash merge to keep the history readable.
 - Never commit secrets, private keys, production data, or real personal information.
+- See the [Contributing Guide](../CONTRIBUTING.md) and [Development Workflow](development/workflow.md) for the full process.
 
 ## 3. Issue and feature lifecycle
 
@@ -45,7 +46,7 @@ Each phase is represented by a feature/epic issue. Implementation tasks are sepa
 - Documentation requirements
 - Dependencies
 
-Use labels consistently: `type:feature`, `type:task`, `type:bug`, `area:backend`, `area:frontend`, `area:infra`, `area:security`, `area:docs`, `priority:high`, `priority:medium`, `priority:low`. If labels are not available in the repository, include the intended label names in issue descriptions until they can be configured.
+Use labels consistently: type:feature, type:task, type:bug, area:backend, area:frontend, area:infra, area:security, area:docs, priority:high, priority:medium, priority:low. If labels are not available in the repository, include the intended label names in issue descriptions until they can be configured. Do not assume labels, milestones, or a project board exist unless they are visible in GitHub.
 
 ## 4. Branch and pull request expectations
 
@@ -79,15 +80,20 @@ Platform:
 - Integration tests for gateway/auth/messaging
 - Dependency and secret scanning in CI
 
+Exact commands become authoritative when the corresponding runtime/tooling is implemented. Do not report a quality gate as passed unless it has actually run.
+
 ## 6. Security rules
 
-- Store local secrets in ignored `.env.local` files or secret stores; commit only safe `.env.example` placeholders.
+- Store local secrets in ignored .env.local files or secret stores; commit only safe .env.example placeholders.
 - Use least privilege for service accounts and database users.
 - Validate issuer, audience, signature, expiry, and allowed algorithms for JWTs.
 - Never log bearer tokens, passwords, API keys, or sensitive payload fields.
 - Apply input validation, payload size limits, timeouts, and rate limits.
 - Treat external webhook and connector payloads as untrusted.
 - Define retention and redaction rules for integration execution logs.
+- Use synthetic data only; never commit production exports or real customer data.
+
+See [Local Setup and Secret Handling](development/local-setup.md).
 
 ## 7. Documentation expectations
 
@@ -111,3 +117,9 @@ For each major feature, keep a short explanation of:
 5. How the implementation is tested and operated.
 
 Do not claim production experience from this portfolio project. Present it as a hands-on architecture and implementation project.
+
+## 9. Local prerequisites
+
+Docker Engine/Desktop with Compose v2 and Git are the baseline prerequisites. PHP 8.4/Composer 2 and Node.js/npm are optional host tools when not using containers. Exact versions and executable commands will be pinned in the runtime foundation phase.
+
+See [Local Development Prerequisites](development/local-setup.md).
