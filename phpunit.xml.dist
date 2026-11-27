@@ -10,7 +10,7 @@
         <server name="APP_ENV" value="test" force="true"/>
         <server name="APP_DEBUG" value="1"/>
         <server name="APP_SECRET" value="test-secret-not-for-production"/>
-        <server name="KERNEL_CLASS" value="App\\Kernel"/>
+        <server name="KERNEL_CLASS" value="App\Kernel"/>
         <server name="DB_HOST" value="127.0.0.1"/>
         <server name="DB_PORT" value="5432"/>
         <server name="DB_NAME" value="enterprise_api_test"/>
