@@ -36,7 +36,7 @@ Versions will be pinned and reviewed in implementation issues. Tool selection is
 
 ## Architecture at a glance
 
-`React Developer/Admin Portal → Kong Gateway → Symfony domain APIs`
+React Developer/Admin Portal → Kong Gateway → Symfony domain APIs
 
 Supporting capabilities:
 - Keycloak provides identity and token issuance.
@@ -46,22 +46,38 @@ Supporting capabilities:
 - The integration runtime connects source and target systems through adapters, transformations, routing, and execution history.
 - OpenTelemetry instruments services; Prometheus/Grafana, Loki, and Jaeger provide operational visibility.
 
-See [Architecture](docs/architecture/overview.md), [Technology decisions](docs/architecture/technology-decisions.md), and [Roadmap](docs/roadmap/README.md).
+See [Architecture](docs/architecture/overview.md), [Technology decisions](docs/architecture/technology-decisions.md), [ADRs](docs/adr/README.md), and [Roadmap](docs/roadmap/README.md).
+
+## Documentation
+
+- [Project Handbook](docs/PROJECT-HANDBOOK.md) — engineering principles, Definition of Done, quality and security rules.
+- [Contributing Guide](CONTRIBUTING.md) — branch, commit, pull request, and review workflow.
+- [Development Workflow](docs/development/workflow.md) — issue lifecycle and delivery conventions.
+- [Local Setup Prerequisites](docs/development/local-setup.md) — required tools and secret-handling policy.
+- [Repository Structure](docs/development/repository-structure.md) — intended code and documentation layout.
+- [Architecture Overview](docs/architecture/overview.md) — components, boundaries, and flows.
+- [Technology Decisions](docs/architecture/technology-decisions.md) — initial technology baseline and trade-offs.
+- [Architecture Decision Records](docs/adr/README.md) — numbered and reviewable architecture decisions.
+- [API Governance](docs/api-governance/standards.md) — contract and lifecycle standards.
+- [Security Threat Model](docs/security/threat-model.md) — initial threat areas and mitigations.
+- [iPaaS Design](docs/integration/ipaas-design.md) — connector and workflow design.
+- [Observability](docs/operations/observability.md) — telemetry and operational signals.
+- [Roadmap](docs/roadmap/README.md) — phases, feature issues, and implementation tickets.
 
 ## Delivery approach
 
-Work is organized into GitHub milestones (when supported) and feature issues. Each feature issue includes scope, acceptance criteria, tests, dependencies, and documentation expectations. Use small branches and pull requests; do not commit implementation directly to `main`.
+Work is organized into phase-level feature issues and smaller implementation issues. Each issue includes scope, acceptance criteria, tests, dependencies, and documentation expectations. Use short-lived branches and pull requests; do not commit implementation directly to main.
 
-1. Read [Project handbook](docs/PROJECT-HANDBOOK.md).
+1. Read the [Project Handbook](docs/PROJECT-HANDBOOK.md) and [Contributing Guide](CONTRIBUTING.md).
 2. Review [Roadmap and phases](docs/roadmap/README.md).
 3. Pick an open issue from the earliest unfinished phase.
-4. Create a branch named `feature/<issue-number>-short-description`.
+4. Create a branch named feature/123-short-description (or docs/123-short-description for documentation-only work).
 5. Implement tests and documentation with the change.
-6. Open a PR referencing the issue (for example, `Closes #12`).
+6. Open a PR referencing the issue (for example, Closes #12).
 
 ## Repository structure (target)
 
-```text
+~~~text
 .
 ├── apps/
 │   ├── api-gateway-config/
@@ -84,6 +100,7 @@ Work is organized into GitHub milestones (when supported) and feature issues. Ea
 │   ├── architecture/
 │   ├── adr/
 │   ├── api-governance/
+│   ├── development/
 │   ├── security/
 │   ├── integration/
 │   ├── operations/
@@ -91,7 +108,7 @@ Work is organized into GitHub milestones (when supported) and feature issues. Ea
 └── .github/
     ├── ISSUE_TEMPLATE/
     └── PULL_REQUEST_TEMPLATE.md
-```
+~~~
 
 The structure is a target, not a claim that these directories or services already exist.
 
