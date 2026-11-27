@@ -13,10 +13,22 @@
   "refreshTokenMaxReuse": 0,
   "roles": {
     "realm": [
-      { "name": "platform-admin", "description": "Local platform administration" },
-      { "name": "portal-user", "description": "Can sign in to the developer portal" },
-      { "name": "api.read", "description": "Read access to protected platform APIs" },
-      { "name": "api.write", "description": "Write access to protected platform APIs" }
+      {
+        "name": "platform-admin",
+        "description": "Local platform administration"
+      },
+      {
+        "name": "portal-user",
+        "description": "Can sign in to the developer portal"
+      },
+      {
+        "name": "api.read",
+        "description": "Read access to protected platform APIs"
+      },
+      {
+        "name": "api.write",
+        "description": "Write access to protected platform APIs"
+      }
     ]
   },
   "clientScopes": [
@@ -39,6 +51,20 @@
             "id.token.claim": "false",
             "access.token.claim": "true"
           }
+        },
+        {
+          "name": "enterprise-api-realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "true"
+          }
         }
       ]
     }
@@ -55,13 +81,24 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
-      "redirectUris": ["http://localhost:5173/*"],
-      "webOrigins": ["http://localhost:5173"],
+      "redirectUris": [
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173"
+      ],
       "attributes": {
         "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "http://localhost:5173/*"
       },
-      "defaultClientScopes": ["web-origins", "acr", "profile", "email", "roles", "enterprise-api-audience"]
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "email",
+        "roles",
+        "enterprise-api-audience"
+      ]
     },
     {
       "clientId": "enterprise-api",
@@ -87,7 +124,10 @@
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
       "clientAuthenticatorType": "client-secret",
-      "defaultClientScopes": ["roles", "enterprise-api-audience"]
+      "defaultClientScopes": [
+        "roles",
+        "enterprise-api-audience"
+      ]
     }
   ],
   "users": [
@@ -98,9 +138,16 @@
       "firstName": "Portal",
       "lastName": "Demo",
       "credentials": [
-        { "type": "password", "value": "local-demo-only", "temporary": false }
+        {
+          "type": "password",
+          "value": "local-demo-only",
+          "temporary": false
+        }
       ],
-      "realmRoles": ["portal-user", "api.read"]
+      "realmRoles": [
+        "portal-user",
+        "api.read"
+      ]
     }
   ]
 }
