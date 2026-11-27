@@ -1,5 +1,4 @@
 name: enterprise-api-platform
-
 services:
   api:
     build:
@@ -21,14 +20,9 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    networks:
-      - platform
+    networks: [platform]
     healthcheck:
-      test:
-        - CMD
-        - php
-        - -r
-        - '$$r=@file_get_contents("http://127.0.0.1:8000/health/ready"); exit($$r === false ? 1 : 0);'
+      test: ["CMD", "php", "-r", '$$r=@file_get_contents("http://127.0.0.1:8000/health/ready"); exit($$r === false ? 1 : 0);']
       interval: 10s
       timeout: 3s
       retries: 5
@@ -42,12 +36,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-enterprise_api}
       POSTGRES_USER: ${POSTGRES_USER:-enterprise_api}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-    ports:
-      - "127.0.0.1:5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - platform
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    networks: [platform]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-enterprise_api} -d ${POSTGRES_DB:-enterprise_api}"]
       interval: 5s
@@ -66,19 +57,44 @@ services:
       KC_HEALTH_ENABLED: "true"
       KC_METRICS_ENABLED: "true"
       KEYCLOAK_MACHINE_CLIENT_SECRET: ${KEYCLOAK_MACHINE_CLIENT_SECRET:?Set KEYCLOAK_MACHINE_CLIENT_SECRET in .env}
-    ports:
-      - "127.0.0.1:8081:8080"
-      - "127.0.0.1:9000:9000"
+    ports: ["127.0.0.1:8081:8080", "127.0.0.1:9000:9000"]
     volumes:
       - keycloak_data:/opt/keycloak/data
       - ./infrastructure/keycloak/realm:/opt/keycloak/data/import:ro
-    networks:
-      - platform
+    networks: [platform]
+
+  kong:
+    image: kong:3.9.1
+    container_name: enterprise-api-gateway
+    restart: unless-stopped
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yml
+      KONG_PROXY_LISTEN: "0.0.0.0:8000"
+      KONG_ADMIN_LISTEN: "0.0.0.0:8001"
+      KONG_STATUS_LISTEN: "0.0.0.0:8100"
+      KONG_PLUGINS: bundled
+      KONG_LOG_LEVEL: notice
+    ports:
+      - "127.0.0.1:8001:8000"
+      - "127.0.0.1:8002:8001"
+      - "127.0.0.1:8100:8100"
+    volumes:
+      - ./infrastructure/kong/kong.yml:/kong/declarative/kong.yml:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [platform]
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
 networks:
   platform:
     driver: bridge
-
 volumes:
   postgres_data:
   keycloak_data:

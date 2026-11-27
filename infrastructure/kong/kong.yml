@@ -1,0 +1,44 @@
+_format_version: "3.0"
+_transform: true
+services:
+  - name: customer-api
+    url: http://api:8000
+    connect_timeout: 3000
+    read_timeout: 10000
+    write_timeout: 10000
+    retries: 1
+    routes:
+      - name: customer-api-v1
+        paths: [/api/v1/customers]
+        methods: [GET, POST, PATCH, OPTIONS]
+        strip_path: false
+        preserve_host: false
+        path_handling: v0
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+              limit_by: ip
+              fault_tolerant: false
+          - name: request-size-limiting
+            config:
+              allowed_payload_size: 1
+              size_unit: megabytes
+              require_content_length: false
+          - name: correlation-id
+            config:
+              header_name: X-Correlation-ID
+              generator: uuid
+              echo_downstream: true
+      - name: customer-api-health
+        paths: [/health, /health/ready]
+        strip_path: false
+        preserve_host: false
+        path_handling: v0
+        plugins:
+          - name: correlation-id
+            config:
+              header_name: X-Correlation-ID
+              generator: uuid
+              echo_downstream: true
