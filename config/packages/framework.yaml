@@ -6,4 +6,3 @@ framework:
         log: true
     router:
         utf8: true
-    test: '%env(bool:APP_ENV_TEST)%'
