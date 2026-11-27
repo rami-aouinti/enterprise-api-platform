@@ -19,6 +19,7 @@ The platform demonstrates how an organization can expose and govern APIs while i
 - **Policy Service:** policy lifecycle and coverage.
 - **Claims Service:** claim intake and status.
 - **Billing Service:** invoices and payment status.
+
 Each service owns its data and exposes versioned contracts. Cross-service workflows should avoid shared database writes.
 
 ### Integration and messaging
@@ -42,7 +43,7 @@ Each service owns its data and exposes versioned contracts. Cross-service workfl
 4. The owning Symfony service validates authorization and business rules.
 5. The service reads/writes its own database.
 6. For cross-service side effects, it emits an event or queues work using a reliable publication pattern.
-7. Consumers process messages idempotently and expose health/metrics/traces.
+7. Consumers process messages idempotently and expose health, metrics, and traces.
 
 ## Integration flow
 
@@ -62,6 +63,17 @@ Each service owns its data and exposes versioned contracts. Cross-service workfl
 - The integration runtime orchestrates connectivity and transformation; domain services remain owners of business invariants.
 - Observability must propagate trace/correlation context across HTTP and messaging boundaries.
 - No service may depend on another service's private database schema.
+
+## Architecture decision records
+
+The initial decisions are documented as proposed records pending validation during implementation:
+- [ADR-0001 — Service boundaries and data ownership](../adr/0001-service-boundaries-and-data-ownership.md)
+- [ADR-0002 — Kong API Gateway](../adr/0002-kong-api-gateway.md)
+- [ADR-0003 — Keycloak and OAuth2/OIDC](../adr/0003-keycloak-oauth2-oidc-identity.md)
+- [ADR-0004 — RabbitMQ and Kafka responsibilities](../adr/0004-rabbitmq-kafka-responsibilities.md)
+- [ADR-0005 — API versioning and compatibility](../adr/0005-api-versioning-and-compatibility.md)
+- [ADR-0006 — iPaaS connector and workflow model](../adr/0006-ipaas-connector-and-workflow-model.md)
+- [ADR-0007 — OpenTelemetry observability](../adr/0007-opentelemetry-observability.md)
 
 ## Deployment evolution
 
