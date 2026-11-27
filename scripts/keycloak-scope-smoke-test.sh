@@ -120,5 +120,20 @@ expect_status "apis:read can list the API registry" 200 GET "/api/v1/registry/ap
 expect_status "Read-only API registry token cannot register an API" 403 POST "/api/v1/registry/apis" "$TOKEN_APIS_READ" '{}'
 expect_status "apis:write reaches API registry validation" 422 POST "/api/v1/registry/apis" "$TOKEN_APIS_WRITE" '{}'
 
+API_NAME="CI-Registry-Smoke-$(date +%s)"
+API_PAYLOAD=$(jq -n --arg name "$API_NAME" '{name:$name, owner:"CI Smoke Test", description:"API registry end-to-end smoke test", tags:["ci","smoke"], lifecycle_state:"draft"}')
+expect_status "apis:write can register an API" 201 POST "/api/v1/registry/apis" "$TOKEN_APIS_WRITE" "$API_PAYLOAD"
+API_ID=$(jq -er '.id' "$RESPONSE_BODY")
+
+expect_status "apis:read can retrieve API details" 200 GET "/api/v1/registry/apis/$API_ID" "$TOKEN_APIS_READ"
+expect_status "Read-only API registry token cannot update lifecycle state" 403 PATCH "/api/v1/registry/apis/$API_ID" "$TOKEN_APIS_READ" '{"lifecycle_state":"deprecated"}'
+expect_status "apis:write can publish an API" 200 PATCH "/api/v1/registry/apis/$API_ID" "$TOKEN_APIS_WRITE" '{"lifecycle_state":"published"}'
+expect_status "apis:read can filter the API catalog" 200 GET "/api/v1/registry/apis?q=CI-Registry-Smoke&state=published&tag=smoke" "$TOKEN_APIS_READ"
+
+OPENAPI_PAYLOAD=$(jq -n --arg title "$API_NAME" '{version:"1.0.0", document:{openapi:"3.1.0", info:{title:$title, version:"1.0.0"}, paths:{}}}')
+expect_status "apis:write can register an OpenAPI version" 201 POST "/api/v1/registry/apis/$API_ID/versions" "$TOKEN_APIS_WRITE" "$OPENAPI_PAYLOAD"
+expect_status "apis:read can retrieve the OpenAPI version" 200 GET "/api/v1/registry/apis/$API_ID/versions/1.0.0" "$TOKEN_APIS_READ"
+expect_status "Duplicate OpenAPI versions are rejected" 409 POST "/api/v1/registry/apis/$API_ID/versions" "$TOKEN_APIS_WRITE" "$OPENAPI_PAYLOAD"
+
 echo
 echo "Keycloak JWT authentication and OAuth2 scope authorization: OK"
