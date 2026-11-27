@@ -36,6 +36,10 @@ final readonly class DoctrineApiRegistryRepository implements ApiRegistryReposit
         $api['versions'] = array_map($this->hydrateVersionSummary(...), $versions);
         return $api;
     }
+    /**
+     * @param array<string, mixed> $api
+     * @return array<string, mixed>
+     */
     public function create(array $api): array
     {
         $row = $this->connection->fetchAssociative('INSERT INTO api_registry (id, name, description, owner, tags, lifecycle_state) VALUES (:id, :name, :description, :owner, CAST(:tags AS JSONB), :lifecycle_state) RETURNING id, name, description, owner, tags, lifecycle_state, created_at, updated_at', ['id' => self::generateUuid(), 'name' => $api['name'], 'description' => $api['description'], 'owner' => $api['owner'], 'tags' => json_encode($api['tags'], JSON_THROW_ON_ERROR), 'lifecycle_state' => $api['lifecycle_state']]);
@@ -44,6 +48,10 @@ final readonly class DoctrineApiRegistryRepository implements ApiRegistryReposit
         }
         return $this->hydrateApi($row);
     }
+    /**
+     * @param array<string, mixed> $api
+     * @return array<string, mixed>|null
+     */
     public function update(string $id, array $api): ?array
     {
         $assignments = [];
@@ -67,6 +75,10 @@ final readonly class DoctrineApiRegistryRepository implements ApiRegistryReposit
         $row = $this->connection->fetchAssociative(sprintf('UPDATE api_registry SET %s WHERE id = :id RETURNING id, name, description, owner, tags, lifecycle_state, created_at, updated_at', implode(', ', $assignments)), $parameters);
         return $row === false ? null : $this->hydrateApi($row);
     }
+    /**
+     * @param array<string, mixed> $document
+     * @return array<string, mixed>
+     */
     public function addVersion(string $apiId, string $version, array $document): array
     {
         $row = $this->connection->fetchAssociative('INSERT INTO api_registry_versions (id, api_id, version, openapi_document) VALUES (:id, :api_id, :version, CAST(:document AS JSONB)) RETURNING id, api_id, version, openapi_document, created_at', ['id' => self::generateUuid(), 'api_id' => $apiId, 'version' => $version, 'document' => json_encode($document, JSON_THROW_ON_ERROR)]);
@@ -102,17 +114,26 @@ final readonly class DoctrineApiRegistryRepository implements ApiRegistryReposit
         }
         return [$conditions === [] ? '' : 'WHERE ' . implode(' AND ', $conditions), $parameters];
     }
-    /** @param array<string, mixed> $row @return array<string, mixed> */
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
     private function hydrateApi(array $row): array
     {
         return ['id' => (string) $row['id'], 'name' => (string) $row['name'], 'description' => (string) $row['description'], 'owner' => (string) $row['owner'], 'tags' => $this->decodeJson((string) $row['tags']), 'lifecycle_state' => (string) $row['lifecycle_state'], 'created_at' => new DateTimeImmutable((string) $row['created_at'])->format(DATE_ATOM), 'updated_at' => new DateTimeImmutable((string) $row['updated_at'])->format(DATE_ATOM)];
     }
-    /** @param array<string, mixed> $row @return array<string, mixed> */
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
     private function hydrateVersion(array $row): array
     {
         return ['id' => (string) $row['id'], 'api_id' => (string) $row['api_id'], 'version' => (string) $row['version'], 'document' => $this->decodeJson((string) $row['openapi_document']), 'created_at' => new DateTimeImmutable((string) $row['created_at'])->format(DATE_ATOM)];
     }
-    /** @param array<string, mixed> $row @return array<string, mixed> */
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
     private function hydrateVersionSummary(array $row): array
     {
         return ['id' => (string) $row['id'], 'version' => (string) $row['version'], 'created_at' => new DateTimeImmutable((string) $row['created_at'])->format(DATE_ATOM)];

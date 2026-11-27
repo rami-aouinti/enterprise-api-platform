@@ -11,11 +11,20 @@ interface ApiRegistryRepository
     public function count(?string $search, ?string $state, ?string $tag): int;
     /** @return array<string, mixed>|null */
     public function find(string $id): ?array;
-    /** @param array<string, mixed> $api @return array<string, mixed> */
+    /**
+     * @param array<string, mixed> $api
+     * @return array<string, mixed>
+     */
     public function create(array $api): array;
-    /** @param array<string, mixed> $api @return array<string, mixed>|null */
+    /**
+     * @param array<string, mixed> $api
+     * @return array<string, mixed>|null
+     */
     public function update(string $id, array $api): ?array;
-    /** @param array<string, mixed> $document @return array<string, mixed> */
+    /**
+     * @param array<string, mixed> $document
+     * @return array<string, mixed>
+     */
     public function addVersion(string $apiId, string $version, array $document): array;
     /** @return array<string, mixed>|null */
     public function findVersion(string $apiId, string $version): ?array;

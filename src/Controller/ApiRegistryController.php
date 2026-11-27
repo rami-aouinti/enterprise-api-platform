@@ -29,13 +29,13 @@ final readonly class ApiRegistryController
         if ($page === false || $page < 1 || $perPage === false || $perPage < 1 || $perPage > 100) {
             return ProblemDetails::response($request, 400, 'invalid-pagination', 'Invalid pagination parameters', 'Page must be a positive integer and per_page must be between 1 and 100.');
         }
-        if ($state !== null && (!is_string($state) || !in_array($state, ['draft', 'published', 'deprecated'], true))) {
+        if ($state !== null && (!in_array($state, ['draft', 'published', 'deprecated'], true))) {
             return ProblemDetails::response($request, 400, 'invalid-api-state', 'Invalid API lifecycle state', 'State must be draft, published or deprecated.');
         }
-        if ($search !== null && (!is_string($search) || ($length = iconv_strlen($search, 'UTF-8')) === false || $length > 200)) {
+        if ($search !== null && (($length = iconv_strlen($search, 'UTF-8')) === false || $length > 200)) {
             return ProblemDetails::response($request, 400, 'invalid-search', 'Invalid search query', 'Search query must be at most 200 characters.');
         }
-        if ($tag !== null && (!is_string($tag) || preg_match('/^[a-z0-9][a-z0-9-]{0,39}$/', $tag) !== 1)) {
+        if ($tag !== null && (preg_match('/^[a-z0-9][a-z0-9-]{0,39}$/', $tag) !== 1)) {
             return ProblemDetails::response($request, 400, 'invalid-tag', 'Invalid tag filter', 'Tag filter must use lowercase letters, numbers or hyphens.');
         }
         $total = $this->apis->count($search, $state, $tag);

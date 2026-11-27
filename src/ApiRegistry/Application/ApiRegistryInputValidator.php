@@ -9,7 +9,10 @@ use stdClass;
 final class ApiRegistryInputValidator
 {
     private const array ALLOWED_API_FIELDS = ['name', 'description', 'owner', 'tags', 'lifecycle_state'];
-    /** @param array<string, mixed> $input @return array{data: array<string, mixed>, errors: array<string, string>} */
+    /**
+     * @param array<string, mixed> $input
+     * @return array{data: array<string, mixed>, errors: array<string, string>}
+     */
     public function validateApi(array $input, bool $partial = false): array
     {
         $data = [];
@@ -122,7 +125,10 @@ final class ApiRegistryInputValidator
         }
         return $this->normalizeNested($value);
     }
-    /** @param array<string, mixed> $value @return array<string, mixed> */
+    /**
+     * @param array<string, mixed> $value
+     * @return array<string, mixed>
+     */
     private function normalizeNested(array $value): array
     {
         foreach ($value as $key => $item) {
