@@ -9,6 +9,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 final readonly class KeycloakUser implements UserInterface
 {
     /**
+     * @param non-empty-string $identifier
      * @param list<string> $roles
      * @param list<string> $scopes
      */
@@ -16,8 +17,7 @@ final readonly class KeycloakUser implements UserInterface
         private string $identifier,
         private array $roles,
         private array $scopes = [],
-    ) {
-    }
+    ) {}
 
     public function getUserIdentifier(): string
     {
@@ -45,7 +45,5 @@ final readonly class KeycloakUser implements UserInterface
         return $this->scopes;
     }
 
-    public function eraseCredentials(): void
-    {
-    }
+    public function eraseCredentials(): void {}
 }
