@@ -177,9 +177,13 @@ scopes. Le client de test `enterprise-api-no-read` ne les reçoit pas. Un scope
 optionnel n'est pas accordé automatiquement : le client doit le demander et
 Keycloak doit l'autoriser.
 
-Demander un token de lecture :
+Demander un token de lecture (charger d'abord le secret local) :
 
 ~~~bash
+set -a
+source .env
+set +a
+
 TOKEN_RESPONSE=$(curl --fail --silent --show-error --request POST \
   http://localhost:8081/realms/enterprise-platform/protocol/openid-connect/token \
   --header 'Content-Type: application/x-www-form-urlencoded' \
