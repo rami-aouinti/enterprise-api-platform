@@ -44,7 +44,7 @@ final class ApiRegistryControllerTest extends WebTestCase
         $client = static::createClient();
         $repository = $this->repository();
         $repository->expects(self::once())->method('find')->with(self::API_ID)->willReturn($this->api());
-        $repository->expects(self::once())->method('addVersion')->with(self::API_ID, '1.0.0', ['openapi' => '3.1.0', 'info' => ['title' => 'Customer API', 'version' => '1.0.0'], 'paths' => []])->willReturn(['id' => '223e4567-e89b-42d3-a456-426614174000', 'api_id' => self::API_ID, 'version' => '1.0.0', 'document' => ['openapi' => '3.1.0'], 'created_at' => '2026-11-27T15:00:00+00:00']);
+        $repository->expects(self::once())->method('addVersion')->with(self::API_ID, '1.0.0', ['openapi' => '3.1.0', 'info' => ['title' => 'Customer API', 'version' => '1.0.0'], 'paths' => (object) []])->willReturn(['id' => '223e4567-e89b-42d3-a456-426614174000', 'api_id' => self::API_ID, 'version' => '1.0.0', 'document' => ['openapi' => '3.1.0'], 'created_at' => '2026-11-27T15:00:00+00:00']);
         $client->jsonRequest('POST', '/api/v1/registry/apis/' . self::API_ID . '/versions', ['version' => '1.0.0', 'document' => ['openapi' => '3.1.0', 'info' => ['title' => 'Customer API', 'version' => '1.0.0'], 'paths' => (object) []]]);
         self::assertResponseStatusCodeSame(201);
     }

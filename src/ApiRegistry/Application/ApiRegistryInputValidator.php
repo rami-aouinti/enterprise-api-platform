@@ -111,7 +111,8 @@ final class ApiRegistryInputValidator
             } elseif (is_string($version) && ($info['version'] ?? null) !== $version) {
                 $errors['document'] = 'OpenAPI info.version must match the registered version.';
             }
-            if (!is_array($document['paths'] ?? null)) {
+            $paths = $document['paths'] ?? null;
+            if (!($paths instanceof stdClass) && (!is_array($paths) || array_is_list($paths))) {
                 $errors['document'] = 'The OpenAPI document must define a paths object.';
             }
         }
@@ -135,16 +136,31 @@ final class ApiRegistryInputValidator
     private function normalizeNested(array $value): array
     {
         foreach ($value as $key => $item) {
-            if ($item instanceof stdClass) {
-                $value[$key] = $this->normalizeNested(get_object_vars($item));
-            } elseif (is_array($item) && !array_is_list($item)) {
-                $value[$key] = $this->normalizeNested($item);
-            } elseif (is_array($item)) {
-                $value[$key] = array_map(fn(mixed $nested): mixed => $nested instanceof stdClass ? $this->normalizeNested(get_object_vars($nested)) : (is_array($nested) && !array_is_list($nested) ? $this->normalizeNested($nested) : $nested), $item);
-            }
+            $value[$key] = $this->normalizeNestedValue($item);
         }
+
         return $value;
     }
+
+    private function normalizeNestedValue(mixed $value): mixed
+    {
+        if ($value instanceof stdClass) {
+            $properties = get_object_vars($value);
+
+            return $properties === [] ? (object) [] : $this->normalizeNested($properties);
+        }
+
+        if (is_array($value)) {
+            if (!array_is_list($value)) {
+                return $this->normalizeNested($value);
+            }
+
+            return array_map($this->normalizeNestedValue(...), $value);
+        }
+
+        return $value;
+    }
+
     private function length(string $value): int
     {
         $length = iconv_strlen($value, 'UTF-8');

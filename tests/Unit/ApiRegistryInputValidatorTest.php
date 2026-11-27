@@ -33,6 +33,7 @@ final class ApiRegistryInputValidatorTest extends TestCase
         self::assertSame([], $result['errors']);
         self::assertSame('1.2.0', $result['data']['version']);
         self::assertSame('3.1.0', $result['data']['document']['openapi']);
+        self::assertInstanceOf(\stdClass::class, $result['data']['document']['paths']);
     }
     public function testOpenApiVersionMustMatchDocumentMetadata(): void
     {
