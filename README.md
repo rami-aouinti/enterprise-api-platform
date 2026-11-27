@@ -1,83 +1,95 @@
 # Enterprise API Integration Platform
 
-A production-minded learning project that demonstrates enterprise API management, API governance, secure service integration, event-driven architecture, and an extensible iPaaS-style integration runtime.
+A production-minded learning project demonstrating enterprise API management, API governance, secure service integration, event-driven architecture, and an extensible iPaaS-style integration runtime.
 
-> **Purpose:** build and explain a realistic platform relevant to a Senior API Developer role. This is an independent portfolio/learning project, not a DEVK system and not a claim that the selected vendors are mandated by DEVK.
+> **Purpose:** build and explain a realistic platform relevant to a Senior API Developer role. This is an independent portfolio project, not a DEVK system.
 
 ## Current implementation
 
-The initial local runtime is available through Docker Compose:
-
-- PHP 8.4 API container with basic liveness and PostgreSQL readiness endpoints.
-- PostgreSQL 17 with a persistent named volume.
-- A dedicated Docker bridge network.
-- Container health checks and startup dependency ordering.
-- Local environment variables loaded from an ignored `.env` file.
-
-The PHP endpoint is deliberately a small runtime bootstrap. The next backend ticket introduces the Symfony application and replaces this bootstrap without changing the local developer workflow.
+- Symfony 7.4 / PHP 8.4 customer API.
+- PostgreSQL 17 with persistent Docker volume.
+- Docker Compose local runtime and container health checks.
+- Liveness endpoint: `GET /health`.
+- Readiness endpoint: `GET /health/ready` (executes `SELECT 1` against PostgreSQL).
+- PHPUnit unit and functional test suites.
+- PHPStan static analysis and PHP-CS-Fixer code style.
+- GitHub Actions backend quality workflow.
 
 ## Start locally
 
-Requirements: Git, Docker Engine/Desktop, and Docker Compose v2.
+Requirements: Git, Docker Engine/Desktop, Docker Compose v2.
 
 ~~~bash
 cp .env.example .env
-# Edit .env and set a private local POSTGRES_PASSWORD.
+# Set private values for POSTGRES_PASSWORD and APP_SECRET in .env.
 docker compose config --quiet
 docker compose up -d --build
 docker compose ps
 ~~~
 
-Verify the API and database integration with the smoke-test script:
+Verify the endpoints:
 
 ~~~bash
+curl -i http://localhost:8000/health
+curl -i http://localhost:8000/health/ready
 bash scripts/smoke-test.sh
 ~~~
 
-The script checks HTTP 200 for liveness and readiness, verifies that readiness can connect to PostgreSQL, and confirms that unknown routes return HTTP 404. You can also inspect the endpoints directly with `curl -i http://localhost:8000/health` and `curl -i http://localhost:8000/health/ready`.
+The endpoints should return HTTP 200 when the API and database are ready.
 
-Useful commands:
+## Backend quality commands
+
+The API container includes Composer and the project dependencies:
 
 ~~~bash
-# Follow all service logs
-docker compose logs -f
+docker compose exec api php bin/console about
+docker compose exec api composer test
+docker compose exec api composer test:unit
+docker compose exec api composer test:functional
+docker compose exec api composer analyse
+docker compose exec api composer cs:check
+~~~
 
-# Follow one service
+The CI workflow resolves dependencies, validates Composer configuration, and runs style, static-analysis, and PHPUnit checks. A generated `composer.lock` should be committed after the first dependency resolution so local builds and CI use the same exact dependency versions.
+
+## Useful Docker commands
+
+~~~bash
+docker compose logs -f
 docker compose logs -f api
 docker compose logs -f database
-
-# Stop containers but preserve the database volume
 docker compose down
-
-# Start again
 docker compose up -d
+~~~
 
-# Destructively reset the database volume and all local database data
+**Destructive reset:** this deletes the PostgreSQL volume and all local database data.
+
+~~~bash
 docker compose down -v
 docker compose up -d --build
 ~~~
 
-The API is exposed on 127.0.0.1:8000 and PostgreSQL on 127.0.0.1:5432. The database is also reachable by the API container at database:5432. Do not use real or production data.
+The API is exposed on 127.0.0.1:8000 and PostgreSQL on 127.0.0.1:5432. The database is reachable from the API container at database:5432. Use synthetic data only.
 
 ## Planned technology baseline
 
-| Concern | Initial choice | Why |
-|---|---|---|
-| Backend services | PHP 8.4, Symfony 7 | Strong fit with the project's PHP/API focus |
-| Admin portal | React, TypeScript, Vite | Typed operator and developer portal |
-| API Gateway | Kong Gateway (OSS) | Routing, plugins, rate limiting, JWT/OIDC integration options |
-| Identity | Keycloak | OAuth 2.0, OIDC, realms, clients, roles |
-| API contract | OpenAPI 3.1 | Language-neutral API contract |
-| Linting/governance | Spectral | Automated API style rules |
-| Relational data | PostgreSQL | Transactional service data |
-| Messaging | RabbitMQ | Work queues, retries, dead-lettering |
-| Event streaming | Apache Kafka | Durable event streams and replay |
-| Cache | Redis | Cache and distributed coordination where justified |
-| Observability | OpenTelemetry, Prometheus, Grafana, Loki, Jaeger | Metrics, logs, traces |
-| Local runtime | Docker Compose | Reproducible development environment |
-| Delivery | GitHub Actions | Automated quality gates and CI |
+| Concern | Initial choice |
+|---|---|
+| Backend services | PHP 8.4, Symfony 7.4 |
+| Admin portal | React, TypeScript, Vite |
+| API Gateway | Kong Gateway (OSS) |
+| Identity | Keycloak (OAuth 2.0 / OIDC) |
+| API contract | OpenAPI 3.1 |
+| API linting/governance | Spectral |
+| Relational data | PostgreSQL |
+| Messaging | RabbitMQ |
+| Event streaming | Apache Kafka |
+| Cache | Redis, only where justified |
+| Observability | OpenTelemetry, Prometheus, Grafana, Loki, Jaeger |
+| Local runtime | Docker Compose |
+| Delivery | GitHub Actions |
 
-Versions will be pinned and reviewed in implementation issues. Tool selection is a practical reference architecture, not a vendor requirement.
+This is a practical reference architecture, not a vendor requirement. Versions and design decisions are documented in [ADRs](docs/adr/README.md).
 
 ## Architecture at a glance
 
@@ -87,31 +99,31 @@ Supporting capabilities:
 - Keycloak provides identity and token issuance.
 - PostgreSQL stores service-owned transactional data.
 - RabbitMQ handles task-oriented asynchronous messaging.
-- Kafka carries domain event streams where replay/stream processing is valuable.
-- The integration runtime connects source and target systems through adapters, transformations, routing, and execution history.
+- Kafka carries durable domain event streams where replay or multiple consumers matter.
+- The integration runtime connects systems through adapters, transformations, routing, and execution history.
 - OpenTelemetry instruments services; Prometheus/Grafana, Loki, and Jaeger provide operational visibility.
 
-See [Architecture](docs/architecture/overview.md), [Technology decisions](docs/architecture/technology-decisions.md), [ADRs](docs/adr/README.md), and [Roadmap](docs/roadmap/README.md).
+See [Architecture](docs/architecture/overview.md), [Technology decisions](docs/architecture/technology-decisions.md), and [Roadmap](docs/roadmap/README.md).
 
 ## Documentation
 
-- [Project Handbook](docs/PROJECT-HANDBOOK.md) — engineering principles, Definition of Done, quality and security rules.
-- [Contributing Guide](CONTRIBUTING.md) — commit conventions and the main-branch workflow.
-- [Development Workflow](docs/development/workflow.md) — issue lifecycle and delivery conventions.
-- [Local Setup](docs/development/local-setup.md) — prerequisites, Docker commands, and secret handling.
-- [Repository Structure](docs/development/repository-structure.md) — intended code and documentation layout.
-- [Architecture Overview](docs/architecture/overview.md) — components, boundaries, and flows.
-- [Technology Decisions](docs/architecture/technology-decisions.md) — initial technology baseline and trade-offs.
-- [Architecture Decision Records](docs/adr/README.md) — numbered and reviewable architecture decisions.
-- [API Governance](docs/api-governance/standards.md) — contract and lifecycle standards.
-- [Security Threat Model](docs/security/threat-model.md) — initial threat areas and mitigations.
-- [iPaaS Design](docs/integration/ipaas-design.md) — connector and workflow design.
-- [Observability](docs/operations/observability.md) — metrics, logs, and traces.
-- [Roadmap](docs/roadmap/README.md) — phases, feature issues, and implementation tickets.
+- [Project Handbook](docs/PROJECT-HANDBOOK.md)
+- [Contributing Guide](CONTRIBUTING.md) — direct-to-main workflow.
+- [Development Workflow](docs/development/workflow.md)
+- [Local Setup](docs/development/local-setup.md)
+- [Repository Structure](docs/development/repository-structure.md)
+- [Architecture Overview](docs/architecture/overview.md)
+- [Technology Decisions](docs/architecture/technology-decisions.md)
+- [Architecture Decision Records](docs/adr/README.md)
+- [API Governance](docs/api-governance/standards.md)
+- [Security Threat Model](docs/security/threat-model.md)
+- [iPaaS Design](docs/integration/ipaas-design.md)
+- [Observability](docs/operations/observability.md)
+- [Roadmap](docs/roadmap/README.md)
 
 ## Delivery approach
 
-Work is organized into phase-level feature issues and smaller implementation issues. We work directly on `main` for this repository, with focused commits per ticket. Do not create branches or pull requests for this project. Every change must reference its issue in the commit message or implementation notes, include relevant tests, and update documentation.
+We work directly on `main` for this repository. Do not create branches or pull requests. Work on one ticket at a time, use focused Conventional Commit messages with the issue number, validate changes, and document actual test results.
 
 ## Repository structure (target)
 
@@ -126,8 +138,7 @@ Work is organized into phase-level feature issues and smaller implementation iss
 │   ├── api-gateway-config/
 │   ├── developer-portal/
 │   └── integration-runtime/
-├── packages/
-│   └── shared-contracts/
+├── packages/shared-contracts/
 ├── infrastructure/
 │   ├── docker/
 │   ├── kong/
@@ -137,12 +148,12 @@ Work is organized into phase-level feature issues and smaller implementation iss
 └── docs/
 ~~~
 
-The structure is a target, not a claim that all listed services already exist.
+The structure is a target, not a claim that every listed service already exists.
 
 ## Status
 
-**Phase 01 — Runtime foundation in progress.** Docker Compose and the initial API/database containers are committed. Symfony application setup, CI, domain APIs, gateway, identity, messaging, integration runtime, portal, and observability follow in the roadmap.
+**Phase 01 — Runtime foundation:** Docker Compose and the Symfony backend bootstrap are committed. The next steps introduce domain APIs, gateway, identity, messaging, integration runtime, portal, and observability.
 
 ## Learning outcomes
 
-By completing the project, the developer should be able to explain API design, API lifecycle and governance, gateway responsibilities, OAuth2/OIDC flows, threat protection, synchronous vs asynchronous integration, event delivery guarantees, iPaaS connector design, observability, and operational trade-offs with concrete code and tests.
+The completed project will provide concrete code and tests to explain API design and governance, gateway responsibilities, OAuth2/OIDC, threat protection, synchronous vs asynchronous integration, delivery guarantees, iPaaS connector design, observability, and operational trade-offs.
