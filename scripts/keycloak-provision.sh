@@ -35,11 +35,11 @@ test -n "$SERVICE_ACCOUNT_USERNAME"
 # Add the realm-role mapper to the audience scope, which is already assigned
 # to the machine client. This avoids relying on the optional built-in "roles" scope.
 AUDIENCE_SCOPE_ID=$("$KC" get client-scopes -r "$REALM" \
-  | sed -n '/"id" : /{h}; /"name" : "enterprise-api-audience"/{x;s/.*"id" : "\([^"]*\)".*/\1/p;}')
+  | sed -n '/"id" : /{N; /"name" : "enterprise-api-audience"/s/.*"id" : "\\([^"]*\\)".*/\\1/p;}')
 test -n "$AUDIENCE_SCOPE_ID"
 
 MAPPER_ID=$("$KC" get "client-scopes/$AUDIENCE_SCOPE_ID/protocol-mappers/models" -r "$REALM" \
-  | sed -n '/"id" : /{h}; /"name" : "enterprise-api-realm-roles"/{x;s/.*"id" : "\([^"]*\)".*/\1/p;}')
+  | sed -n '/"id" : /{N; /"name" : "enterprise-api-realm-roles"/s/.*"id" : "\\([^"]*\\)".*/\\1/p;}')
 
 if [ -z "$MAPPER_ID" ]; then
   "$KC" create "client-scopes/$AUDIENCE_SCOPE_ID/protocol-mappers/models" -r "$REALM" \
