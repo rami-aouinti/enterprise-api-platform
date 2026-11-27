@@ -12,8 +12,7 @@ final readonly class HealthController
 {
     public function __construct(
         private Connection $connection,
-    ) {
-    }
+    ) {}
 
     #[Route('/health', name: 'health_live', methods: ['GET'])]
     public function live(): JsonResponse
