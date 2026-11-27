@@ -53,8 +53,11 @@ fi
 # machine client. A client must explicitly request a scope when obtaining a token.
 find_client_scope_id() {
   SCOPE_NAME="$1"
+  # kcadm returns pretty-printed JSON. Flatten it and extract the id
+  # immediately preceding the exact scope name (no awk/jq dependency).
   "$KC" get client-scopes -r "$REALM" \
-    | awk -v name="$SCOPE_NAME" 'BEGIN { RS="{" } index($0, "\"name\" : \"" name "\"") { if (match($0, /"id" : "[^"]+"/)) { value=substr($0, RSTART, RLENGTH); sub(/^[^"]*"id" : "/, "", value); gsub(/"/, "", value); print value; exit } }'
+    | tr '\n' ' ' \
+    | sed -n "s/.*\\"id\\"[[:space:]]*:[[:space:]]*\\"\\([^\\"]*\\)\\".*\\"name\\"[[:space:]]*:[[:space:]]*\\"$SCOPE_NAME\\".*/\\1/p"
 }
 
 ensure_optional_scope() {
