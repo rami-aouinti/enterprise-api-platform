@@ -9,7 +9,8 @@ services:
     restart: unless-stopped
     environment:
       APP_ENV: ${APP_ENV:-dev}
-      APP_PORT: 8000
+      APP_DEBUG: ${APP_DEBUG:-1}
+      APP_SECRET: ${APP_SECRET:-local-dev-secret-change-before-deployment}
       DB_HOST: database
       DB_PORT: 5432
       DB_NAME: ${POSTGRES_DB:-enterprise_api}
@@ -31,7 +32,7 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
-      start_period: 10s
+      start_period: 15s
 
   database:
     image: postgres:17-alpine
