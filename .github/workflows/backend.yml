@@ -65,11 +65,11 @@ jobs:
           extensions: ctype, iconv, pdo_pgsql
           tools: composer:v2
 
+      - name: Resolve and install dependencies
+        run: composer update --no-interaction --prefer-dist --no-progress
+
       - name: Validate Composer configuration
         run: composer validate --strict
-
-      - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
 
       - name: Check code style
         run: composer cs:check
