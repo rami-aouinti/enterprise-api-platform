@@ -87,7 +87,7 @@
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
       "clientAuthenticatorType": "client-secret",
-      "defaultClientScopes": ["service_account", "roles", "enterprise-api-audience"]
+      "defaultClientScopes": ["roles", "enterprise-api-audience"]
     }
   ],
   "users": [

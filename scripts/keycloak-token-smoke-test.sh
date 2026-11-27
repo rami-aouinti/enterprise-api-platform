@@ -15,10 +15,10 @@ set +a
 
 DISCOVERY_URL="http://localhost:8081/realms/enterprise-platform/.well-known/openid-configuration"
 TOKEN_URL="http://localhost:8081/realms/enterprise-platform/protocol/openid-connect/token"
+EXPECTED_ISSUER="http://localhost:8081/realms/enterprise-platform"
 
-curl --fail --silent --show-error "$DISCOVERY_URL" | jq -e '
-  .issuer == "http://localhost:8081/realms/enterprise-platform"
-  and (.jwks_uri | type == "string")
+curl --fail --silent --show-error "$DISCOVERY_URL" | jq -e --arg issuer "$EXPECTED_ISSUER" '
+  .issuer == $issuer and (.jwks_uri | type == "string")
 ' >/dev/null
 
 TOKEN_RESPONSE=$(curl --fail --silent --show-error \
@@ -29,13 +29,18 @@ TOKEN_RESPONSE=$(curl --fail --silent --show-error \
   --data-urlencode "client_secret=$KEYCLOAK_MACHINE_CLIENT_SECRET")
 
 ACCESS_TOKEN=$(printf '%s' "$TOKEN_RESPONSE" | jq -er '.access_token')
-printf '%s' "$ACCESS_TOKEN" | awk -F. 'NF == 3 { exit 0 } { exit 1 }'
-
-printf '%s' "$ACCESS_TOKEN" | jq -R '
+TOKEN_CLAIMS=$(printf '%s' "$ACCESS_TOKEN" | jq -R '
   split(".")[1] | gsub("-"; "+") | gsub("_"; "/")
-  | . + (["", "==", "="][length % 4])
+  | . + (["", "", "==", "="][length % 4])
   | @base64d | fromjson
-  | {iss, aud, azp, exp, iat, realm_access}
-'
+')
 
+printf '%s' "$TOKEN_CLAIMS" | jq -e --arg issuer "$EXPECTED_ISSUER" '
+  .iss == $issuer
+  and (.aud | if type == "array" then index("enterprise-api") != null else . == "enterprise-api" end)
+  and (.exp > now)
+  and (.realm_access.roles | index("api.read") != null)
+' >/dev/null
+
+printf '%s' "$TOKEN_CLAIMS" | jq '{iss, aud, azp, exp, iat, realm_access}'
 printf '%s\n' "Client Credentials token flow: OK"
