@@ -69,9 +69,13 @@ final readonly class ApiRegistryController
     public function update(Request $request, string $id): JsonResponse
     {
         $payload = $this->decodePayload($request);
-        if ($payload instanceof JsonResponse) { return $payload; }
+        if ($payload instanceof JsonResponse) {
+            return $payload;
+        }
         $validation = $this->validator->validateApi($payload, true);
-        if ($validation['errors'] !== []) { return ProblemDetails::response($request, 422, 'validation-error', 'Validation failed', 'One or more fields are invalid.', ['errors' => $validation['errors']]); }
+        if ($validation['errors'] !== []) {
+            return ProblemDetails::response($request, 422, 'validation-error', 'Validation failed', 'One or more fields are invalid.', ['errors' => $validation['errors']]);
+        }
         try {
             $api = $this->apis->update($id, $validation['data']);
         } catch (UniqueConstraintViolationException) {
@@ -83,9 +87,13 @@ final readonly class ApiRegistryController
     public function createVersion(Request $request, string $id): JsonResponse
     {
         $payload = $this->decodePayload($request);
-        if ($payload instanceof JsonResponse) { return $payload; }
+        if ($payload instanceof JsonResponse) {
+            return $payload;
+        }
         $validation = $this->validator->validateVersion($payload);
-        if ($validation['errors'] !== []) { return ProblemDetails::response($request, 422, 'invalid-openapi-document', 'Invalid API version', 'The version or OpenAPI document is invalid.', ['errors' => $validation['errors']]); }
+        if ($validation['errors'] !== []) {
+            return ProblemDetails::response($request, 422, 'invalid-openapi-document', 'Invalid API version', 'The version or OpenAPI document is invalid.', ['errors' => $validation['errors']]);
+        }
         if ($this->apis->find($id) === null) {
             return ProblemDetails::response($request, 404, 'api-not-found', 'API not found', 'The requested API is not registered.');
         }
