@@ -62,7 +62,7 @@ curl -i http://localhost:8000/health
 curl -i http://localhost:8000/health/ready
 curl --fail http://localhost:9000/health/ready
 bash scripts/smoke-test.sh
-sh scripts/keycloak-token-smoke-test.sh
+bash scripts/keycloak-token-smoke-test.sh
 docker compose ps
 ~~~
 

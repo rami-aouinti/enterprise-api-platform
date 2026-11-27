@@ -1,14 +1,14 @@
-#!/usr/bin/env sh
-set -eu
+#!/usr/bin/env bash
+set -euo pipefail
 
-if [ ! -f .env ]; then
+if [[ ! -f .env ]]; then
   echo "Missing .env. Copy .env.example and set the local credentials first." >&2
   exit 1
 fi
 
 # .env values used by this script must be simple shell-safe values.
 set -a
-. ./.env
+source ./.env
 set +a
 
 : "${KEYCLOAK_MACHINE_CLIENT_SECRET:?Set KEYCLOAK_MACHINE_CLIENT_SECRET in .env}"
