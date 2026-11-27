@@ -7,7 +7,7 @@
 - Docker Compose v2.
 - A terminal capable of running shell commands.
 
-Host-installed PHP, Composer, Node.js, and npm are optional. The project uses containers to keep the runtime consistent across developer machines.
+Host-installed PHP and Composer are optional; the API container provides PHP 8.4 and Composer.
 
 Verify the required tools:
 
@@ -25,9 +25,9 @@ From the repository root:
 cp .env.example .env
 ~~~
 
-Open `.env` and replace `POSTGRES_PASSWORD` with a private local password. Do not commit this file.
+Set a private local `POSTGRES_PASSWORD` and a long random `APP_SECRET` in `.env`. Do not commit this file.
 
-Validate and start the stack:
+Validate and start:
 
 ~~~bash
 docker compose config --quiet
@@ -35,42 +35,47 @@ docker compose up -d --build
 docker compose ps
 ~~~
 
-The stack contains:
-
-| Service | Container | Local endpoint | Purpose |
-|---|---|---|---|
-| API | enterprise-api | http://localhost:8000 | PHP API bootstrap |
-| PostgreSQL | enterprise-api-database | localhost:5432 | Persistent relational database |
-
-The API connects to PostgreSQL over the private Compose network using host `database` and port `5432`. Host ports are bound to loopback only.
+The stack contains Symfony 7.4 / PHP 8.4 and PostgreSQL 17. PostgreSQL data is stored in the persistent `postgres_data` volume. The API connects to the database through the private Compose network using host `database` and port `5432`.
 
 ## Health checks
 
 ~~~bash
 curl -i http://localhost:8000/health
 curl -i http://localhost:8000/health/ready
+bash scripts/smoke-test.sh
 docker compose ps
 ~~~
 
-- `/health` confirms that the HTTP API process responds.
-- `/health/ready` confirms that the API can connect to PostgreSQL.
+- `/health` confirms that the Symfony HTTP application responds.
+- `/health/ready` executes a lightweight database query and returns HTTP 503 if PostgreSQL is unavailable.
 - Compose waits for PostgreSQL's `pg_isready` health check before starting the API.
 
-Both HTTP endpoints should return status 200 when the stack is ready.
+## Backend commands
+
+~~~bash
+# Symfony environment and configuration overview
+docker compose exec api php bin/console about
+
+# Tests
+docker compose exec api composer test
+docker compose exec api composer test:unit
+docker compose exec api composer test:functional
+
+# Static analysis and formatting
+docker compose exec api composer analyse
+docker compose exec api composer cs:check
+~~~
+
+The first dependency resolution should produce a `composer.lock`. Commit that lock file so future local builds and CI resolve identical package versions.
 
 ## Logs and lifecycle
 
 ~~~bash
-# All logs
 docker compose logs -f
-
-# API logs only
 docker compose logs -f api
-
-# Database logs only
 docker compose logs -f database
 
-# Stop containers; preserve database data
+# Stop containers but preserve database data
 docker compose down
 
 # Restart
@@ -98,8 +103,7 @@ docker compose up -d --build
 ## Troubleshooting
 
 - If Compose reports that `POSTGRES_PASSWORD` is missing, copy `.env.example` to `.env` and set a local value.
-- If port 8000 or 5432 is already in use, stop the conflicting local service before starting Compose.
+- If the API container fails to build, inspect `docker compose build --no-cache api` output.
 - If the API remains unhealthy, inspect `docker compose logs api database`.
+- If port 8000 or 5432 is already in use, stop the conflicting local service.
 - To recreate containers without deleting data, run `docker compose down` followed by `docker compose up -d --build`.
-
-The current API is a minimal PHP bootstrap for the infrastructure ticket. The Symfony application is introduced in the next backend implementation ticket.
