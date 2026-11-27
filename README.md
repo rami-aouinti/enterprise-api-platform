@@ -4,15 +4,61 @@ A production-minded learning project that demonstrates enterprise API management
 
 > **Purpose:** build and explain a realistic platform relevant to a Senior API Developer role. This is an independent portfolio/learning project, not a DEVK system and not a claim that the selected vendors are mandated by DEVK.
 
-## Goals
+## Current implementation
 
-- Design and publish consistent REST APIs using OpenAPI.
-- Route and protect APIs through a centralized API Gateway.
-- Apply OAuth 2.0 / OpenID Connect, authorization, rate limits, and threat controls.
-- Govern API lifecycle, compatibility, standards, and consumer access.
-- Integrate heterogeneous systems through reusable connectors, mappings, and workflows.
-- Use asynchronous messaging and event streaming with reliable delivery patterns.
-- Operate the platform with automated tests, CI/CD, observability, and containerized infrastructure.
+The initial local runtime is available through Docker Compose:
+
+- PHP 8.4 API container with basic liveness and PostgreSQL readiness endpoints.
+- PostgreSQL 17 with a persistent named volume.
+- A dedicated Docker bridge network.
+- Container health checks and startup dependency ordering.
+- Local environment variables loaded from an ignored `.env` file.
+
+The PHP endpoint is deliberately a small runtime bootstrap. The next backend ticket introduces the Symfony application and replaces this bootstrap without changing the local developer workflow.
+
+## Start locally
+
+Requirements: Git, Docker Engine/Desktop, and Docker Compose v2.
+
+~~~bash
+cp .env.example .env
+# Edit .env and set a private local POSTGRES_PASSWORD.
+docker compose config --quiet
+docker compose up -d --build
+docker compose ps
+~~~
+
+Verify both API endpoints:
+
+~~~bash
+curl -i http://localhost:8000/health
+curl -i http://localhost:8000/health/ready
+~~~
+
+Expected responses are HTTP 200. The readiness endpoint confirms that the API can establish a PostgreSQL connection.
+
+Useful commands:
+
+~~~bash
+# Follow all service logs
+docker compose logs -f
+
+# Follow one service
+docker compose logs -f api
+docker compose logs -f database
+
+# Stop containers but preserve the database volume
+docker compose down
+
+# Start again
+docker compose up -d
+
+# Destructively reset the database volume and all local database data
+docker compose down -v
+docker compose up -d --build
+~~~
+
+The API is exposed on 127.0.0.1:8000 and PostgreSQL on 127.0.0.1:5432. The database is also reachable by the API container at database:5432. Do not use real or production data.
 
 ## Planned technology baseline
 
@@ -51,9 +97,9 @@ See [Architecture](docs/architecture/overview.md), [Technology decisions](docs/a
 ## Documentation
 
 - [Project Handbook](docs/PROJECT-HANDBOOK.md) — engineering principles, Definition of Done, quality and security rules.
-- [Contributing Guide](CONTRIBUTING.md) — branch, commit, pull request, and review workflow.
+- [Contributing Guide](CONTRIBUTING.md) — commit conventions and the main-branch workflow.
 - [Development Workflow](docs/development/workflow.md) — issue lifecycle and delivery conventions.
-- [Local Setup Prerequisites](docs/development/local-setup.md) — required tools and secret-handling policy.
+- [Local Setup](docs/development/local-setup.md) — prerequisites, Docker commands, and secret handling.
 - [Repository Structure](docs/development/repository-structure.md) — intended code and documentation layout.
 - [Architecture Overview](docs/architecture/overview.md) — components, boundaries, and flows.
 - [Technology Decisions](docs/architecture/technology-decisions.md) — initial technology baseline and trade-offs.
@@ -61,33 +107,26 @@ See [Architecture](docs/architecture/overview.md), [Technology decisions](docs/a
 - [API Governance](docs/api-governance/standards.md) — contract and lifecycle standards.
 - [Security Threat Model](docs/security/threat-model.md) — initial threat areas and mitigations.
 - [iPaaS Design](docs/integration/ipaas-design.md) — connector and workflow design.
-- [Observability](docs/operations/observability.md) — telemetry and operational signals.
+- [Observability](docs/operations/observability.md) — metrics, logs, and traces.
 - [Roadmap](docs/roadmap/README.md) — phases, feature issues, and implementation tickets.
 
 ## Delivery approach
 
-Work is organized into phase-level feature issues and smaller implementation issues. Each issue includes scope, acceptance criteria, tests, dependencies, and documentation expectations. Use short-lived branches and pull requests; do not commit implementation directly to main.
-
-1. Read the [Project Handbook](docs/PROJECT-HANDBOOK.md) and [Contributing Guide](CONTRIBUTING.md).
-2. Review [Roadmap and phases](docs/roadmap/README.md).
-3. Pick an open issue from the earliest unfinished phase.
-4. Create a branch named feature/123-short-description (or docs/123-short-description for documentation-only work).
-5. Implement tests and documentation with the change.
-6. Open a PR referencing the issue (for example, Closes #12).
+Work is organized into phase-level feature issues and smaller implementation issues. We work directly on `main` for this repository, with focused commits per ticket. Do not create branches or pull requests for this project. Every change must reference its issue in the commit message or implementation notes, include relevant tests, and update documentation.
 
 ## Repository structure (target)
 
 ~~~text
 .
-├── apps/
-│   ├── api-gateway-config/
-│   ├── developer-portal/
-│   └── integration-runtime/
 ├── services/
 │   ├── customer-service/
 │   ├── policy-service/
 │   ├── claims-service/
 │   └── billing-service/
+├── apps/
+│   ├── api-gateway-config/
+│   ├── developer-portal/
+│   └── integration-runtime/
 ├── packages/
 │   └── shared-contracts/
 ├── infrastructure/
@@ -96,25 +135,14 @@ Work is organized into phase-level feature issues and smaller implementation iss
 │   ├── keycloak/
 │   ├── observability/
 │   └── kubernetes/
-├── docs/
-│   ├── architecture/
-│   ├── adr/
-│   ├── api-governance/
-│   ├── development/
-│   ├── security/
-│   ├── integration/
-│   ├── operations/
-│   └── roadmap/
-└── .github/
-    ├── ISSUE_TEMPLATE/
-    └── PULL_REQUEST_TEMPLATE.md
+└── docs/
 ~~~
 
-The structure is a target, not a claim that these directories or services already exist.
+The structure is a target, not a claim that all listed services already exist.
 
 ## Status
 
-**Planning and foundation documentation.** Implementation starts with Phase 0 / Phase 1 issues in GitHub. See the [open issues](https://github.com/rami-aouinti/enterprise-api-platform/issues).
+**Phase 01 — Runtime foundation in progress.** Docker Compose and the initial API/database containers are committed. Symfony application setup, CI, domain APIs, gateway, identity, messaging, integration runtime, portal, and observability follow in the roadmap.
 
 ## Learning outcomes
 
